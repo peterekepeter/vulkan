@@ -1,0 +1,3 @@
+[submodule "submodule/app-service-sandwich"]
+	path = submodule/app-service-sandwich
+	url = https://github.com/peterekepeter/app-service-sandwich.git
