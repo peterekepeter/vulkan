@@ -20,3 +20,5 @@ public:
 	
 	~VulkanWindow();
 };
+
+void ApplyEnvVarChanges();

@@ -54,24 +54,31 @@ void printAvaiableExtensions(Console& console, const VulkanApplication& vulkan);
 class VulkanPhysicalDevice
 {
 public:
+	VkSurfaceKHR surface;
 	VkPhysicalDevice physicalDevice;
 	VkPhysicalDeviceProperties properties;
 	VkPhysicalDeviceFeatures features;
+	std::vector<const char*> requiredExtensions;
+	std::vector<VkExtensionProperties> availableExtensions;
 	std::vector<VkQueueFamilyProperties> queueFamilies;
-	int score = 0;
-	bool suitable = false;
+	int score;
+	bool suitable;
+	bool swapChainAdequate;
+	bool extensionsSupported;
 	int graphicsFamilyIndex = -1;
 	int computeFamilyIndex = -1;
 	int presentFamilyIndex = -1;
+	VkSurfaceCapabilitiesKHR capabilities;
+	std::vector<VkSurfaceFormatKHR> formats;
+	std::vector<VkPresentModeKHR> presentModes;
 
-	VulkanPhysicalDevice(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
-
-	VulkanPhysicalDevice(const VulkanPhysicalDevice& other) = delete;
-	VulkanPhysicalDevice& operator = (const VulkanPhysicalDevice& other) = delete;
-	VulkanPhysicalDevice(VulkanPhysicalDevice&& other);
-	VulkanPhysicalDevice& operator = (VulkanPhysicalDevice&& other);
+	void init(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
 
 private:
+
+	void querySwapChainSupport();
+	void findAndCheckExtensions();
+	void findQueues();
 
 	int calculateScore();
 
@@ -95,11 +102,26 @@ class VulkanDevice
 public:
 	VkDeviceQueueCreateInfo queueCreateInfo;
 	VkPhysicalDeviceFeatures deviceFeatures;
+	std::vector<const char*> requiredExtensions;
 	VkDeviceCreateInfo createInfo;
 	VkDevice device;
 	VkQueue graphicsQueue;
+	VkQueue computeQueue;
+	VkQueue presentQueue;
 
 	VulkanDevice(VulkanApplication& vulkan, VulkanPhysicalDevice& physicalDevice);
 
 	~VulkanDevice();
+};
+
+class VulkanSwapChain {
+public:
+	VkSwapchainKHR swapChain;
+	VkSurfaceFormatKHR surfaceFormat;
+	VkPresentModeKHR presentMode;
+	VkExtent2D extent;
+	VkDevice logicalDevice;
+
+	VulkanSwapChain(const VulkanPhysicalDevice& physicalDevice, const VulkanDevice& device, int defaultWidth, int defaultHeight);
+	~VulkanSwapChain();
 };

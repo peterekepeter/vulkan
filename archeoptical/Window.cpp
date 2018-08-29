@@ -2,10 +2,10 @@
 
 #include "Window.hpp"
 
-VulkanWindow::VulkanWindow(VkInstance instance, HWND hwnd): instance(instance) {
+VulkanWindow::VulkanWindow(VkInstance instance, HWND hWnd): instance(instance) {
 	VkWin32SurfaceCreateInfoKHR createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-	createInfo.hwnd = hwnd;
+	createInfo.hwnd = hWnd;
 	createInfo.hinstance = GetModuleHandle(nullptr);
 
 	auto CreateWin32SurfaceKHR = (PFN_vkCreateWin32SurfaceKHR)vkGetInstanceProcAddr(instance, "vkCreateWin32SurfaceKHR");
@@ -89,6 +89,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_PAINT:
 		OnWindowPaint();
+		RECT rect;
+		GetUpdateRect(hWnd, &rect, false);
+		ValidateRect(hWnd, &rect);
 		break;
 	case WM_KEYUP:
 		keySet = true;
@@ -127,11 +130,12 @@ HWND InitWindow(const InitWindowInfo& info) {
 
 	initInfo = info;
 
-	hInstance = GetModuleHandle(NULL);
-
 	// TODO: Place code here.
 	//SetProcessDPIAware();
 	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+
+	// get hinstance
+	hInstance = GetModuleHandle(NULL);
 
 	// Initialize global strings
 	szTitle = L"Window";
@@ -148,13 +152,28 @@ HWND InitWindow(const InitWindowInfo& info) {
 	return hwnd;
 }
 
-void ProcessWindowMessages() {
+void ProcessWindowMessagesNonBlocking() {
 	MSG msg;
 	while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 	{
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+}
+
+void ProcessWindowMessages() {
+	MSG msg;
+	while (GetMessage(&msg, nullptr, 0, 0))
+	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+}
+
+void ApplyEnvVarChanges()
+{
+	// to fix steam overlay bug
+	SetEnvironmentVariableW(L"DISABLE_VK_LAYER_VALVE_steam_overlay_1", L"1");
 }
 
 static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
