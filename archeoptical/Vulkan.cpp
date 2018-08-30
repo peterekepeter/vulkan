@@ -36,6 +36,11 @@ void VulkanPhysicalDevice::init(VkPhysicalDevice physicalDevice, VkSurfaceKHR su
 
 	findAndCheckExtensions();
 	findQueues();
+	resetSwapChain();
+}
+
+void VulkanPhysicalDevice::resetSwapChain()
+{
 	if (extensionsSupported)
 	{
 		querySwapChainSupport();
@@ -44,7 +49,6 @@ void VulkanPhysicalDevice::init(VkPhysicalDevice physicalDevice, VkSurfaceKHR su
 	suitable = isSuitable();
 	score = calculateScore();
 }
-
 
 void VulkanPhysicalDevice::querySwapChainSupport()
 {

@@ -27,7 +27,9 @@ void OnWindowDpiChanged(int dpi) {
 }
 
 void OnWindowResize(int x, int y) {
-
+	if (initInfo.onWindowResize != nullptr) {
+		initInfo.onWindowResize(x, y);
+	}
 }
 
 void OnWindowDestroy() {
@@ -185,6 +187,15 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	{
 		return FALSE;
 	}
+
+
+	RECT rect;
+	GetClientRect(hwnd, &rect);
+	int width = rect.right - rect.left;
+	int height = rect.bottom - rect.top;
+
+
+	OnWindowResize(width, height);
 
 	ShowWindow(hwnd, nCmdShow);
 	UpdateWindow(hwnd);

@@ -73,6 +73,7 @@ public:
 	std::vector<VkPresentModeKHR> presentModes;
 
 	void init(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+	void resetSwapChain();
 
 private:
 
