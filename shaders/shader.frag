@@ -13,5 +13,5 @@ layout (binding = 0) uniform UniformBufferObject {
 
 void main() {
 	vec2 uv = gl_FragCoord.xy / ubo.resolution.xy;
-    outColor = vec4(fragColor, 1.0);
+    outColor = vec4(fragColor*1.0, 1.0);
 }
