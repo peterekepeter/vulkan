@@ -1,3 +1,6 @@
 [submodule "submodule/app-service-sandwich"]
 	path = submodule/app-service-sandwich
 	url = https://github.com/peterekepeter/app-service-sandwich.git
+[submodule "submodule/simple-audio"]
+	path = submodule/simple-audio
+	url = https://github.com/peterekepeter/simple-audio.git

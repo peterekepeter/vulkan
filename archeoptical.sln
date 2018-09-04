@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AppServiceSandwich", "submo
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "submodule", "submodule", "{A2CC86D3-670F-41B7-9B2C-4846B98EB696}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio", "submodule\simple-audio\audio.vcxproj", "{EB5288BC-36D6-4877-B669-2DA14AD510E2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -33,12 +35,19 @@ Global
 		{00E14769-860E-4F44-9B7D-2733FF5ADE62}.Release|x64.Build.0 = Release|x64
 		{00E14769-860E-4F44-9B7D-2733FF5ADE62}.Release|x86.ActiveCfg = Release|Win32
 		{00E14769-860E-4F44-9B7D-2733FF5ADE62}.Release|x86.Build.0 = Release|Win32
+		{EB5288BC-36D6-4877-B669-2DA14AD510E2}.Debug|x64.ActiveCfg = Debug|Win32
+		{EB5288BC-36D6-4877-B669-2DA14AD510E2}.Debug|x86.ActiveCfg = Debug|Win32
+		{EB5288BC-36D6-4877-B669-2DA14AD510E2}.Debug|x86.Build.0 = Debug|Win32
+		{EB5288BC-36D6-4877-B669-2DA14AD510E2}.Release|x64.ActiveCfg = Release|Win32
+		{EB5288BC-36D6-4877-B669-2DA14AD510E2}.Release|x86.ActiveCfg = Release|Win32
+		{EB5288BC-36D6-4877-B669-2DA14AD510E2}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{00E14769-860E-4F44-9B7D-2733FF5ADE62} = {A2CC86D3-670F-41B7-9B2C-4846B98EB696}
+		{EB5288BC-36D6-4877-B669-2DA14AD510E2} = {A2CC86D3-670F-41B7-9B2C-4846B98EB696}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1258142B-89D8-48E8-814E-8AB383E47D01}

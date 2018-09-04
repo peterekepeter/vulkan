@@ -43,7 +43,9 @@ void OnWindowPaint() {
 }
 
 void OnKeystateChange(int key, bool state) {
-
+	if (initInfo.onKeystateChange != nullptr) {
+		initInfo.onKeystateChange(key, state);
+	}
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)

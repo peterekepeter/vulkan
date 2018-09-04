@@ -7,6 +7,7 @@ public:
 	// todo add stuff
 	std::function<void()> onCloseWindow = nullptr;
 	std::function<void(int, int)> onWindowResize = nullptr;
+	std::function<void(int, bool)> onKeystateChange = nullptr;
 };
 
 HWND InitWindow(const InitWindowInfo& info);
