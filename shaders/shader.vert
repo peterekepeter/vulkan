@@ -37,7 +37,7 @@ void main() {
 	int pid = vid/3;
 	vec2 aspectCorrection = vec2(ubo.resolution.y/ubo.resolution.x, 1.0f);
 	vec2 pos = positions[gl_VertexIndex%3];
-	pos = rotate(pos, ubo.time+pid*0.1)*0.5; 
+	pos = rotate(pos, (ubo.time+pid)*3.14159*0.1)*0.5; 
 	pos.x+=pid*0.05 - 1;
 	pos.y += (pid%16)*0.1 - 0.5;
 	pos = pos * aspectCorrection;
