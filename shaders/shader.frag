@@ -15,13 +15,13 @@ void main() {
 	vec2 uv = data.xy;
 	float pid = data.z;
 	////
-	float circle = (1-length(uv))*16;
+	float circle = (1-length(uv))*4;
 	circle = smoothstep(0, 1, circle);
 	float t = ubo.time;
-	float amp = pow(1.0-mod(t, 2),4)*0.5+0.5;
+	float amp = 1.2;
 	amp*=circle;
 	if (amp<0.1)discard;
-	float fx = pow(1-mod(t,8)/8, 8);
-	vec3 color = vec3(0.5,0.3,0.2)*(fract(sin(sin(pid*39.123)*51.32)*121.21)+0.5);
+	float fx = pow(1-mod(t,8)/8, 2);
+	vec3 color = vec3(0.5,0.1,0.3)*(fract(sin(sin(pid*39.123)*51.32)*121.21)+0.5);
     outColor = vec4(mix(color, color.yzx, fx)*amp, 1.0);
 }

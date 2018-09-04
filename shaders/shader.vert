@@ -1,6 +1,5 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
-#extension GL_KHR_vulkan_glsl : enable
 
 out gl_PerVertex {
     vec4 gl_Position;
@@ -40,23 +39,26 @@ void main() {
 	int pid = tid/2; // polygon id
 	vec2 uv = positions[vid%3+tid%2*2];
 	
-	vec2 pos = vec2(0); 
+	vec3 pos = vec3(0); 
 	
-	pos.x += (pid%1000)*0.005 - 2;
-	pos.y += (pid/1000)*0.005 - 2;
-	pos+=vec2(cos(pid%743*16.0+ubo.time), sin(pid%1235*0.31+ubo.time))*0.01;
-	pos+=sin(pos.yx+ubo.time*0.5)*0.8;
-	pos+=cos(pos.yx*4+ubo.time*0.5)*0.1;
-	pos+=cos(pos.yx*16+ubo.time*0.5)*0.01;
+	pos.x += (pid%1000)*0.01 - 5;
+	pos.y += (pid/1000)*0.01 - 5;
+	pos+=vec3(cos(pid%743*16.0+ubo.time) , sin(pid%1235*0.31+ubo.time) , sin(pid%125*0.61+ubo.time))*0.01;
+	pos+=sin(pos.yzx+ubo.time*0.5)*0.8;
+	pos+=cos(pos.zxy*4+ubo.time*0.5)*0.1;
+	pos+=cos(pos.yzx*16+ubo.time*0.5)*0.01;
+	pos+=cos(pos.yzx*64+ubo.time*0.15)*0.005;
+	pos.z+=2;
 	
 	float size = pow(abs(cos(sin(pid*3.4125)*32.12)),2)*0.01;
 	
 	//if (pid<400000) size=0;// discard
 	
-	pos+=uv*size;
+
 	vec2 aspectCorrection = vec2(ubo.resolution.y/ubo.resolution.x, 1.0f);
-	pos = pos * aspectCorrection;
-    gl_Position = vec4(pos, 0.0, 1.0);
+	
+	pos = (pos + vec3(uv*0.01,0.0))*aspectCorrection.xyy;
+    gl_Position = vec4(pos, pos.z);
     data.xy = uv;
 	data.z = pid;
 	data.w = 0; // undefined for now

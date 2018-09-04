@@ -424,7 +424,7 @@ VulkanSwapChain::VulkanSwapChain(const VulkanPhysicalDevice& physicalDevice, con
 	presentMode = chooseSwapPresentMode(physicalDevice.presentModes);
 	extent = chooseSwapExtent(physicalDevice.capabilities, width, height);
 
-	uint32_t imageCount = physicalDevice.capabilities.minImageCount + 1;
+	uint32_t imageCount = physicalDevice.capabilities.minImageCount + 8;
 	if (physicalDevice.capabilities.maxImageCount > 0 && imageCount > physicalDevice.capabilities.maxImageCount) {
 		imageCount = physicalDevice.capabilities.maxImageCount;
 	}
