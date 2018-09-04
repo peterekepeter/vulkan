@@ -6,7 +6,7 @@ out gl_PerVertex {
     vec4 gl_Position;
 };
 
-layout(location = 0) out vec3 fragColor;
+layout(location = 0) out vec4 data;
 
 
 layout (binding = 0) uniform UniformBufferObject {
@@ -15,10 +15,12 @@ layout (binding = 0) uniform UniformBufferObject {
 	float reserved;
 } ubo;
 
-vec2 positions[3] = vec2[](
-    vec2(0.0, -0.2),
-    vec2(0.5, 0.5),
-    vec2(-0.5, 0.5)
+vec2 positions[5] = vec2[](
+    vec2(-1, -1),
+    vec2(+1, -1),
+    vec2(+1, +1),
+	vec2(-1, +1),
+	vec2(-1, -1)
 ); 
 
 vec3 colors[3] = vec3[](
@@ -34,13 +36,28 @@ vec2 rotate(vec2 v, float a){
 
 void main() {
 	int vid = gl_VertexIndex;
-	int pid = vid/3;
+	int tid = vid/3; // triangle id
+	int pid = tid/2; // polygon id
+	vec2 uv = positions[vid%3+tid%2*2];
+	
+	vec2 pos = vec2(0); 
+	
+	pos.x += (pid%1000)*0.005 - 2;
+	pos.y += (pid/1000)*0.005 - 2;
+	pos+=vec2(cos(pid%743*16.0+ubo.time), sin(pid%1235*0.31+ubo.time))*0.01;
+	pos+=sin(pos.yx+ubo.time*0.5)*0.8;
+	pos+=cos(pos.yx*4+ubo.time*0.5)*0.1;
+	pos+=cos(pos.yx*16+ubo.time*0.5)*0.01;
+	
+	float size = pow(abs(cos(sin(pid*3.4125)*32.12)),2)*0.01;
+	
+	//if (pid<400000) size=0;// discard
+	
+	pos+=uv*size;
 	vec2 aspectCorrection = vec2(ubo.resolution.y/ubo.resolution.x, 1.0f);
-	vec2 pos = positions[gl_VertexIndex%3];
-	pos = rotate(pos, (ubo.time+pid)*3.14159*0.1)*0.5; 
-	pos.x+=pid*0.05 - 1;
-	pos.y += (pid%16)*0.1 - 0.5;
 	pos = pos * aspectCorrection;
     gl_Position = vec4(pos, 0.0, 1.0);
-    fragColor = colors[gl_VertexIndex%3];
+    data.xy = uv;
+	data.z = pid;
+	data.w = 0; // undefined for now
 }
