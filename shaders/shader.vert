@@ -6,6 +6,7 @@ out gl_PerVertex {
 };
 
 layout(location = 0) out vec4 data;
+layout(location = 1) out vec4 data2;
 
 
 layout (binding = 0) uniform UniformBufferObject {
@@ -65,10 +66,11 @@ void main() {
 	
 	//vec3 pos=pf1(pid, ubo.time);
 	
-	vec3 pos = pf2(pid, ubo.time);
-	vec3 pos2 = pf2(pid, ubo.time+0.1);
+	vec3 pos = pf1(pid, ubo.time);
+	vec3 pos2 = pf1(pid, ubo.time+0.2);
 	
-	float scale = 0.1;
+	float blur = 0.3;
+	float scale = 0.02;
 	float size = scale/pos.z;
 	float size2 = scale/pos2.z;
 	
@@ -81,16 +83,23 @@ void main() {
 	float len = length(diff_2d);
 	vec2 displace = rotate(uv, angle);
 	float amp = size/(size+len);
-	amp*=100;
+	amp*=0.05;
+	vec3 color=vec3(0.2,0.7,0.4)*amp/scale;
 	
 	//float size = pow(abs(cos(sin(pid*3.4125)*32.12)),2)*0.02;
 	//if (pid>7) size=0; // discard
 	
 
 	vec2 aspectCorrection = vec2(ubo.resolution.y/ubo.resolution.x, 1.0f);
+	// blur optimization
+	float blur_optimization = (1+blur*blur)*0.5+1/ubo.resolution.y;
+	displace*=blur_optimization;
+	uv*=blur_optimization;
 	
     gl_Position = vec4((mix(pos_2d+displace*size, pos2_2d+displace*size2, -uv.x*.5+.5))*aspectCorrection, 0.5, 1);
     data.xy = uv;
 	data.z = pid;
-	data.w = amp; // undefined for now
+	data.w = size; // undefined for now
+	// color
+	data2=vec4(color.xyz,blur);
 }

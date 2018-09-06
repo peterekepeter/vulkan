@@ -1,4 +1,5 @@
 @echo off
 glslangValidator -V shader.vert shader.frag
-xcopy "*.spv" "spv/*.spv" /Y
+spirv-opt frag.spv -o spv/frag.spv -O
+spirv-opt vert.spv -o spv/vert.spv -O
 del *.spv
