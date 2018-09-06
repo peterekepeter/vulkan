@@ -149,7 +149,7 @@ vec4 pf3(int pid, float time, out vec4 color)
 }
 
 vec3 path(float time){
-	return vec3((sin(time/4.2)+sin(time/4))*2+4+time,-6+sin(time/7),cos(time/4)-4+time*0.25);
+	return vec3((sin(time/4.2)+sin(time/4))*2+4+time,-6+sin(time/7),sin(time/4.1)+cos(time/4)-4+time*0.25);
 }
 
 vec4 pf4(int pid, float time, out vec4 color)
@@ -180,17 +180,20 @@ vec4 pf4(int pid, float time, out vec4 color)
 		}
 		color=vec4(c*0.1, blur);
 	}
-	else if(pid<600000) {
+	else if(pid<501000) {
 		pid-=500000;
-		pos=path(time+pow(abs(sin(pid*43.125))*.5+.5,994)*-8);
+		scale=0.02+pow(abs(sin(pid*42.7123)),8.0);
+		float ts=3+scale;
+		pos=path(time-sin(pid+time/ts)*8-8);
+		float amp=cos(pid+time/ts+1)*32;
+		blur=smoothstep(0,1,scale*2);
 		
 		
-		pos+=sin(pos.yzx+vec3(pid*12.3,pid*9.512,pid*3.4))*.2;
+		pos+=sin(pos.yzx+vec3(pid*12.3,pid*9.512,pid*3.4))*.05;
 		
-		scale*=abs(sin(pid*6123.123));
-		blur=smoothstep(0,1,scale*4);
+		//scale*=abs(sin(pid*6123.123));
 		//pos=vec3(0);
-		color=vec4(vec3(0.5,0.4,0.9)*0.01/scale, blur);
+		color=vec4(vec3(0.5,0.4,0.9)*0.01/pow(scale,1.1)*amp, blur);
 	} else {
 		pos.z=-44;
 		scale=0;
