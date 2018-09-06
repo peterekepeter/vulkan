@@ -26,11 +26,11 @@ void main() {
 	float t = ubo.time;
 	vec3 amp = 1 * data2.xyz;
 	amp*=circle;
-	//if (dot(amp,vec3(1))<0.01)discard;
+	if (dot(amp,vec3(1))<0.01)discard;
 	vec3 color = amp;
 	color *= 1-length(uv_screen.xy-0.5)*1.4;
 	color.xyz*=mix(vec3(0.4,0.6,0.9), vec3(0.9,0.6,0.4), uv_screen.y);
 	color.xyz+=color*fract(mod(ubo.time,1024)*71.312+mod(pid,512)*42.1238+121.831*sin(uv_screen.yxy*vec3(5379.71,2512.31,7321.137)*uv_screen.xyx*vec3(1374.21,4512.3,9321.23)));
 	color=color/(1+color);
-    outColor = vec4(color, 1.0);
+    outColor = vec4(color, 1);
 }
