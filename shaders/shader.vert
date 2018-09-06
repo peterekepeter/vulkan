@@ -23,6 +23,8 @@ vec2 positions[5] = vec2[](
 	vec2(-1, -1)
 ); 
 
+#define PI (355.0/113.0)
+
 vec2 rotate(vec2 v, float a){
 	float c=cos(a), s=sin(a);
 	return vec2(v.x*c + v.y*s, -v.x*s + v.y*c);
@@ -45,7 +47,6 @@ vec4 pf1(int pid, float time, out vec4 color)
 	return vec4(pos, scale);
 }
 
-#define PI (355.0/113.0)
 
 float osin(float x){ return sin(x*PI/4.0); }
 vec2 osin(vec2 x){ return sin(x*PI/4.0); }
@@ -108,6 +109,103 @@ vec4 pf2(int pid, float time, out vec4 color)
 	return vec4(pos, scale);
 }
 
+
+float df(vec3 p, float time){
+	vec3 pm1 = p; 	pm1.xz= mod(p.xz+2,4)-2;
+	vec3 pm2 = p; 	pm2.xz= mod(rotate(p.xz,0.4)+1.4,2.8)-1.4;
+	vec3 pm4 = p; 	pm4.xz= mod(rotate(p.xz,1.2),16)-8;
+	float sphere = length(pm1)-1.2;
+	sphere=min(sphere, length(pm2)-1);
+	sphere=min(sphere, length(pm4)-5);
+	vec3 pm3 = p; 	pm3.xz= mod(rotate(p.xz,0.7)+0.9,1.8)-0.9;
+	sphere = max(sphere, length(pm3.xz)-0.5);
+	float floor = 1-p.y;
+	return min(sphere,floor);
+}
+
+vec4 pf3(int pid, float time, out vec4 color)
+{
+	float scale = 0.1;
+	float blur = 0.1;
+	vec3 pos = vec3(sin(time/4)*4,-4,cos(time/4)-2); 
+	
+	vec3 dir = fract(sin(vec3(pid%115347*0.5321,pid%82345*0.12345,pid%5123*0.14123))*412.5317)-.5;
+	dir=normalize(dir);
+	pos+=dir;
+	
+	for (int i=0; i<50; i++){
+		vec3 p = pos;
+		p.yz=rotate(p.yz,0.5);
+		p.z+=time;
+		p.y-=4;
+		float dist=df(p, time);
+		if (dist<0.001) break;
+		pos+=dir*dist;
+	}
+	pos.z+=4;
+	//scale+=abs(8-pos.z)*0.05;
+	color=vec4(vec3(0.5,0.4,0.3)*0.4, blur);
+	return vec4(pos, scale);
+}
+
+vec3 path(float time){
+	return vec3((sin(time/4.2)+sin(time/4))*2+4+time,-6+sin(time/7),cos(time/4)-4+time*0.25);
+}
+
+vec4 pf4(int pid, float time, out vec4 color)
+{
+	float scale = 0.1;
+	float blur = 0.1;
+	vec3 pos=vec3(0);
+
+	if (pid<500000)
+	{		
+		pos = path(time);
+		vec3 c=vec3(0.5,0.4,0.3);
+		if(pid<250000) {
+			pos.x+=9;
+			pos.y-=5;
+			c=vec3(0.3,0.3,0.5);
+		}
+		vec3 dir = fract(sin(vec3(pid%115347*0.5321,pid%82345*0.12345,pid%5123*0.14123))*412.5317)-.5;
+		dir.y+=0.7;
+		//dir.xz = rotate(dir.xz, time/4);
+		dir=normalize(dir);
+		pos+=dir;
+		for (int i=0; i<50; i++){
+			vec3 p = pos;
+			float dist=df(p, time);
+			if (dist<0.001) break;
+			pos+=dir*dist;
+		}
+		color=vec4(c*0.1, blur);
+	}
+	else if(pid<600000) {
+		pid-=500000;
+		pos=path(time+pow(abs(sin(pid*43.125))*.5+.5,994)*-8);
+		
+		
+		pos+=sin(pos.yzx+vec3(pid*12.3,pid*9.512,pid*3.4))*.2;
+		
+		scale*=abs(sin(pid*6123.123));
+		blur=smoothstep(0,1,scale*4);
+		//pos=vec3(0);
+		color=vec4(vec3(0.5,0.4,0.9)*0.01/scale, blur);
+	} else {
+		pos.z=-44;
+		scale=0;
+	}
+	// camera
+	pos-=path(time);
+	pos.y+=4;
+	pos.x+=sin(time/4);
+	pos.x-=2;
+	pos.z+=4;
+	pos.xz=rotate(pos.xz,0.4);
+	pos.yz=rotate(pos.yz,-0.9);
+	return vec4(pos, scale);
+}
+
 void main() {
 	int vid = gl_VertexIndex;
 	int tid = vid/3; // triangle id
@@ -117,8 +215,8 @@ void main() {
 	
 	//vec3 pos=pf1(pid, ubo.time);
 	vec4 col_res1, col_res2;
-	vec4 pos_res1 = pf2(pid, ubo.time, col_res1);
-	vec4 pos_res2 = pf2(pid, ubo.time+0.1, col_res2);
+	vec4 pos_res1 = pf4(pid, ubo.time, col_res1);
+	vec4 pos_res2 = pf4(pid, ubo.time+0.1, col_res2);
 	
 	if(pos_res1.z<0||pos_res2.z<0) {
 		gl_Position=vec4(0,0,-1,1);
@@ -141,7 +239,8 @@ void main() {
 	vec2 displace = rotate(uv, angle);
 	float amp1 = size1/(size1+len);
 	float amp2 = size2/(size2+len);
-	
+	col_res1.xyz*=amp1;
+	col_res2.xyz*=amp2;
 	//float size = pow(abs(cos(sin(pid*3.4125)*32.12)),2)*0.02;
 	//if (pid>7) size=0; // discard
 	
