@@ -43,7 +43,7 @@ vec4 pf1(int pid, float time, out vec4 color)
 	pos+=cos(pos.yzx*16+time*0.5)*0.01;
 	pos+=cos(pos.yzx*64+time*0.15)*0.005;
 	pos.z+=2;
-	color=vec4(vec3(0.2,0.5,0.9)*0.5, blur);
+	color=vec4(vec3(0.2,0.5,0.9)*2, blur);
 	return vec4(pos, scale);
 }
 
@@ -103,7 +103,7 @@ vec4 pf2(int pid, float time, out vec4 color)
 		c=mix(c,c.zyx, osin(time/4)*fadein);
 		pos+=sin(pos.yxz*.5)*fadein2*2;
 		pos+=sin(pos.yxz*.25)*fadein3*4;
-		color=vec4(mix(c,c.zyx,sin(pid*.125+.5))/pow(scale,1.9)*0.3*(0.01+fadein), blur);
+		color=vec4(mix(c,c.zyx,sin(pid*.125+.5))/pow(scale,1.9)*0.6*(0.01+fadein), blur);
 	}
 	pos.y-=time;
 	return vec4(pos, scale);
@@ -149,7 +149,35 @@ vec4 pf3(int pid, float time, out vec4 color)
 }
 
 vec3 path(float time){
-	return vec3((sin(time/4.2)+sin(time/4))*2+4+time,-6+sin(time/7),sin(time/4.1)+cos(time/4)-4+time*0.25);
+	float ang = time;
+	float movement = smoothstep(62,72,time);
+	vec3 pos = vec3(0,-6, 0);
+	pos.x += (time-50)*movement;
+	pos.y += (sin(ang)+sin(ang*0.9))*0.5*movement;
+	pos.z += (cos(ang)+cos(ang*0.9))*0.5*movement;
+	return pos;
+	//return vec3((sin(time/4.2)+sin(time/4))*2+4+time,-6+sin(time/7),sin(time/4.1)+cos(time/4)-4+time*0.25);
+}
+
+vec4 cluster(int pid, float time, out vec4 color)
+{
+	float scale;
+	float blur = 0.1;
+	vec3 pos=vec3(0);
+	scale=0.02+pow(abs(sin(pid*42.7123)),256.0)/2;
+	float ts=0.5+scale;
+	pos=path(time-sin(pid+time/ts)*1-1);
+	float amp=cos(pid+time/ts+1)*32;
+	float deviate =  pow(abs(sin(pid*61.234)),32.0);
+	blur=smoothstep(0,1,scale*8);
+	scale-=deviate*0.01;
+	pos+=sin(pos.yzx+vec3(pid*12.3,pid*9.512,pid*3.4))*deviate*0.25;
+	//scale*=abs(sin(pid*6123.123));
+	//pos=vec3(0);
+	vec3 c = vec3(0.5,0.4,0.9)*0.01/scale*amp;
+	c=mix(c,c.zxy, deviate);
+	color = vec4(c, blur);
+	return vec4(pos, scale);
 }
 
 vec4 pf4(int pid, float time, out vec4 color)
@@ -157,12 +185,12 @@ vec4 pf4(int pid, float time, out vec4 color)
 	float scale = 0.1;
 	float blur = 0.1;
 	vec3 pos=vec3(0);
-
-	if (pid<500000)
+	int bg_count = 100000;
+	if (pid<bg_count)
 	{		
 		pos = path(time);
 		vec3 c=vec3(0.5,0.4,0.3);
-		if(pid<250000) {
+		if(pid<bg_count/2) {
 			pos.x+=9;
 			pos.y-=5;
 			c=vec3(0.3,0.3,0.5);
@@ -172,7 +200,7 @@ vec4 pf4(int pid, float time, out vec4 color)
 		//dir.xz = rotate(dir.xz, time/4);
 		dir=normalize(dir);
 		pos+=dir;
-		for (int i=0; i<50; i++){
+		for (int i=0; i<30; i++){
 			vec3 p = pos;
 			float dist=df(p, time);
 			if (dist<0.001) break;
@@ -180,32 +208,99 @@ vec4 pf4(int pid, float time, out vec4 color)
 		}
 		color=vec4(c*0.1, blur);
 	}
-	else if(pid<501000) {
-		pid-=500000;
-		scale=0.02+pow(abs(sin(pid*42.7123)),8.0);
-		float ts=3+scale;
-		pos=path(time-sin(pid+time/ts)*8-8);
-		float amp=cos(pid+time/ts+1)*32;
-		blur=smoothstep(0,1,scale*2);
-		
-		
-		pos+=sin(pos.yzx+vec3(pid*12.3,pid*9.512,pid*3.4))*.05;
-		
-		//scale*=abs(sin(pid*6123.123));
-		//pos=vec3(0);
-		color=vec4(vec3(0.5,0.4,0.9)*0.01/pow(scale,1.1)*amp, blur);
+	else if(pid<bg_count+400) {
+		vec4 res = cluster(pid, time, color);
+		pos = res.xyz;
+		scale = res.w;
 	} else {
 		pos.z=-44;
 		scale=0;
+		return vec4(pos, scale);
 	}
 	// camera
-	pos-=path(time);
-	pos.y+=4;
+	pos-=vec3(time, -5, 2);
+	pos.y+=4+sin(time/3);
 	pos.x+=sin(time/4);
 	pos.x-=2;
-	pos.z+=4;
+	pos.z+=4+sin(time/5);
 	pos.xz=rotate(pos.xz,0.4);
 	pos.yz=rotate(pos.yz,-0.9);
+	return vec4(pos, scale);
+}
+
+
+vec4 pf5(int pid, float time, out vec4 color)
+{
+	float scale = 0.1;
+	float blur = 0.1;
+	vec3 pos=vec3(0);
+	int bg_count = 100000;
+	int st_count = 100000;
+	if (pid<st_count){
+		// static
+		pos=(fract(sin(vec3(pid)*vec3(0.63116,0.523,0.69312))*51.123)*2-1)*16;
+		pos.xz*=3;
+		//pos.y+=(time)*sin(pid%7451*214.125)-8*smoothstep(63,68,time)-64*pow(sin(pid%613476)*.5+.5,4);
+		pos+=sin(pos);
+		pos.y-=10;
+		//pos.z+=16;
+		scale=0.05;
+		vec3 c = vec3(0.9, 0.6, 0.5)*0.03 ;
+		//scale+=abs(4+100/(1+time/2)+osin(time*0.25)*2-pos.z)*0.05;
+		float fadein=smoothstep(0,64,time) + osin(time*2+sin(pid%123))+time/64;
+		//fadein=1.0;
+		float fadein2=smoothstep(16,0,time);
+		pos=mix(pos, path(time), smoothstep(32,96, time+abs(sin(pid*312.24))*32));
+		float fadein3=smoothstep(88,96,time);
+		c=mix(c,c.yxz, osin(time/2)*fadein);
+		c=mix(c,c.zyx, osin(time/4)*fadein);
+		c*=(0.1+pow(abs(sin(pid%123)),8.0));
+		//pos+=sin(pos.yxz*.5)*fadein2*2;
+		//pos+=sin(pos.yxz*.25)*fadein3*4;
+		color=vec4(mix(c,c.zyx,sin(pid*.125+.5))/pow(scale,1.9)*0.2*(0.01+fadein), blur);
+	}
+	else if (pid<bg_count+st_count)
+	{		
+		pos = path(time);
+		vec3 c=vec3(0.5,0.4,0.3);
+		if(pid<bg_count/2) {
+			pos.x+=9;
+			pos.y-=5;
+			c=vec3(0.3,0.3,0.5);
+		}
+		vec3 dir = fract(sin(vec3(pid%115347*0.5321,pid%82345*0.12345,pid%5123*0.14123))*412.5317)-.5;
+		dir.y+=0.7;
+		//dir.xz = rotate(dir.xz, time/4);
+		dir=normalize(dir);
+		pos+=dir;
+		for (int i=0; i<30; i++){
+			vec3 p = pos;
+			float dist=df(p, time);
+			if (dist<0.001) break;
+			pos+=dir*dist;
+		}
+		color=vec4(c*0.1, blur);
+	}
+	else if(pid<st_count+bg_count+400) {
+		vec4 res = cluster(pid, time, color);
+		pos = res.xyz;
+		scale = res.w;
+	} else {
+		pos.z=-44;
+		scale=0;
+		return vec4(pos, scale);
+	}
+	// camera
+	pos-=vec3(path(time).x, -5, 2);
+	pos.xz=rotate(pos.xz,(time-62)/16.0*smoothstep(62,68,time)+4);
+	//pos.z+=1;
+	//pos.y+=4+sin(time/3);
+	//pos.x+=sin(time/4);
+	//pos.z+=4+sin(time/5);
+	//pos.xz=rotate(pos.xz,0.4);
+	pos.yz=rotate(pos.yz,-0.7);
+	//pos.y+=3;
+	pos.z+=3;
 	return vec4(pos, scale);
 }
 
@@ -218,11 +313,22 @@ void main() {
 	
 	//vec3 pos=pf1(pid, ubo.time);
 	vec4 col_res1, col_res2;
-	vec4 pos_res1 = pf4(pid, ubo.time, col_res1);
-	vec4 pos_res2 = pf4(pid, ubo.time+0.1, col_res2);
+	float time = ubo.time;
+	vec4 pos_res1, pos_res2;
+	if (time<0)
+	{
+		pos_res1 = pf2(pid, ubo.time, col_res1);
+		pos_res2 = pf2(pid, ubo.time+0.1, col_res2);
+	}
+	else
+	{
+		pos_res1 = pf5(pid, ubo.time, col_res1);
+		pos_res2 = pf5(pid, ubo.time+0.1, col_res2);
+	}
 	
-	if(pos_res1.z<0||pos_res2.z<0) {
-		gl_Position=vec4(0,0,-1,1);
+	float near_limit = 0.0;
+	if(pos_res1.z<near_limit||pos_res2.z<near_limit) {
+		gl_Position=vec4(-4,-4,-4,1);
 		return;
 	}
 	
