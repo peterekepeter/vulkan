@@ -200,6 +200,7 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	OnWindowResize(width, height);
 
 	ShowWindow(hwnd, nCmdShow);
+
 	UpdateWindow(hwnd);
 	return TRUE;
 }
