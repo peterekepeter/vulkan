@@ -9,6 +9,7 @@ public:
 	std::function<void(int, int)> onWindowResize = nullptr;
 	std::function<void(int, bool)> onKeystateChange = nullptr;
 	std::function<void()> onWindowPaint = nullptr;
+	bool fullscreen = false;
 };
 
 HWND InitWindow(const InitWindowInfo& info);

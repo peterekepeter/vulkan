@@ -126,7 +126,7 @@ const wchar_t* szWindowClass;
 bool didInit = false;
 
 static ATOM MyRegisterClass(HINSTANCE hInstance);
-static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow);
+static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen);
 
 
 HWND InitWindow(const InitWindowInfo& info) {
@@ -147,7 +147,7 @@ HWND InitWindow(const InitWindowInfo& info) {
 	MyRegisterClass(hInstance);
 
 	// Perform application initialization:
-	if (!InitInstance(hInstance, true))
+	if (!InitInstance(hInstance, true, initInfo.fullscreen))
 	{
 		throw std::runtime_error("Failed to create window.");
 	}
@@ -180,7 +180,7 @@ void ApplyEnvVarChanges()
 	SetEnvironmentVariableW(L"DISABLE_VK_LAYER_VALVE_steam_overlay_1", L"1");
 }
 
-static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
+static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen)
 {
 	hwnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
@@ -190,13 +190,16 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 		return FALSE;
 	}
 
+	if (fullscreen) {
+		SetWindowLongPtr(hwnd, GWL_EXSTYLE, WS_EX_APPWINDOW | WS_EX_TOPMOST);
+		SetWindowLongPtr(hwnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+		SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_SHOWWINDOW);
+	}
 
 	RECT rect;
 	GetClientRect(hwnd, &rect);
 	int width = rect.right - rect.left;
 	int height = rect.bottom - rect.top;
-
-
 	OnWindowResize(width, height);
 
 	ShowWindow(hwnd, nCmdShow);
