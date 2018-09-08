@@ -10,6 +10,9 @@ public:
 	std::function<void(int, bool)> onKeystateChange = nullptr;
 	std::function<void()> onWindowPaint = nullptr;
 	bool fullscreen = false;
+	bool borderless = false;
+	int xres = 0;
+	int yres = 0;
 };
 
 HWND InitWindow(const InitWindowInfo& info);

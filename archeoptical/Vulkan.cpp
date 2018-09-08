@@ -361,7 +361,7 @@ VulkanDebugUtilsMessenger::VulkanDebugUtilsMessenger(VkInstance & instance, Cons
 	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
 	createInfo.messageSeverity = 
 		VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | 
-		// VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | 
+		VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | 
 		VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | 
 		VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 	createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
@@ -424,7 +424,8 @@ VulkanSwapChain::VulkanSwapChain(const VulkanPhysicalDevice& physicalDevice, con
 	presentMode = chooseSwapPresentMode(physicalDevice.presentModes);
 	extent = chooseSwapExtent(physicalDevice.capabilities, width, height);
 
-	uint32_t imageCount = physicalDevice.capabilities.minImageCount + 8;
+	uint32_t imageCount = 4;
+	if (physicalDevice.capabilities.minImageCount > imageCount) imageCount = physicalDevice.capabilities.minImageCount;
 	if (physicalDevice.capabilities.maxImageCount > 0 && imageCount > physicalDevice.capabilities.maxImageCount) {
 		imageCount = physicalDevice.capabilities.maxImageCount;
 	}

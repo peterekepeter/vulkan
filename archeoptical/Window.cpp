@@ -121,12 +121,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 HINSTANCE hInstance;
 HWND hwnd = nullptr;
-const wchar_t* szTitle;
-const wchar_t* szWindowClass;
+const wchar_t* szTitle = L"Archeoptical";
+const wchar_t* szWindowClass = L"MyWindowClass";
 bool didInit = false;
 
 static ATOM MyRegisterClass(HINSTANCE hInstance);
-static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen);
+static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen, bool borderless, int xres = 0, int yres = 0);
 
 
 HWND InitWindow(const InitWindowInfo& info) {
@@ -147,7 +147,7 @@ HWND InitWindow(const InitWindowInfo& info) {
 	MyRegisterClass(hInstance);
 
 	// Perform application initialization:
-	if (!InitInstance(hInstance, true, initInfo.fullscreen))
+	if (!InitInstance(hInstance, true, initInfo.fullscreen, info.borderless, info.xres, info.yres))
 	{
 		throw std::runtime_error("Failed to create window.");
 	}
@@ -180,20 +180,49 @@ void ApplyEnvVarChanges()
 	SetEnvironmentVariableW(L"DISABLE_VK_LAYER_VALVE_steam_overlay_1", L"1");
 }
 
-static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen)
+static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen, bool borderless, int xres, int yres)
 {
-	hwnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+	if (xres == 0 || yres == 0)
+	{
+		xres = GetSystemMetrics(SM_CXSCREEN);
+		yres = GetSystemMetrics(SM_CYSCREEN);
+	}
+
+	if (fullscreen)
+	{
+		if (!borderless)
+		{
+			int i = 0; 
+			DEVMODEA devmode;
+			bool found = false;
+			while (!found && EnumDisplaySettingsA(nullptr, i, &devmode) == TRUE) {
+				if (devmode.dmPelsWidth == xres && devmode.dmPelsHeight == yres) {
+					found = true;
+				}
+				i++;
+			}
+			
+			if (found) {
+				if (ChangeDisplaySettingsA(&devmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) return FALSE;
+			}
+			hwnd = CreateWindowW(szWindowClass, szTitle, WS_POPUP | WS_VISIBLE, 0, 0, xres, yres, 0, 0, 0, 0);
+		}
+		else 
+		{
+			hwnd = CreateWindowW(szWindowClass, szTitle, WS_POPUP | WS_VISIBLE,
+				0, 0, xres, yres, nullptr, nullptr, hInstance, nullptr);
+		}
+		ShowCursor(0);
+	}
+	else
+	{
+		hwnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+	}
 
 	if (!hwnd)
 	{
 		return FALSE;
-	}
-
-	if (fullscreen) {
-		SetWindowLongPtr(hwnd, GWL_EXSTYLE, WS_EX_APPWINDOW | WS_EX_TOPMOST);
-		SetWindowLongPtr(hwnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
-		SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN), SWP_SHOWWINDOW);
 	}
 
 	RECT rect;
