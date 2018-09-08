@@ -274,6 +274,8 @@ vec4 pf5(int pid, float time, out vec4 color)
 	float maxid = max(0,(cluster_pcount/400)-2);
 	float cam_interpolate = smoothstep(256-16*4,256-16*2, time);
 	float cam_interpolate2 = smoothstep(256-16*8,256-16*6, time);
+	
+		float snare = (1-fract(0.5+time/2))*smoothstep(256-16*2, 256-16*2+1,time)*smoothstep(256+16*4, 256+16*4-1, time);
 	if (pid<st_count){
 		// static
 		float converge = pow(smoothstep(0,64, time+pow(abs(sin(pid*4)),1)*16),16);
@@ -311,7 +313,7 @@ vec4 pf5(int pid, float time, out vec4 color)
 		pos = path(time+pow(abs(sin(time+pid)),32)*-8, clusterid);
 		vec3 c=cluster_color(clusterid)*vec3(0.9,0.7,0.4);
 		vec3 dir = fract(sin(vec3(pid%115347*0.5321,pid%82345*0.12345,pid%5123*0.14123))*412.5317)-.5;
-		scale=0.05;
+		scale=0.05+snare*0.03;
 		dir.y+=mix(0.7,0,cam_interpolate2);
 		//dir.xz = rotate(dir.xz, time/4);
 		dir=normalize(dir);
@@ -330,7 +332,7 @@ vec4 pf5(int pid, float time, out vec4 color)
 		float id=cluster_pid/400;
 		id=min(id,maxid);
 		vec4 res = cluster(cluster_pid, time, color, id);
-		color.xyz*=fadin_geo_n_cluster;
+		color.xyz*=fadin_geo_n_cluster+snare;
 		pos = res.xyz;
 		scale = res.w;
 	} else {
