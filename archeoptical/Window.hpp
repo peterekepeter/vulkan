@@ -8,6 +8,7 @@ public:
 	std::function<void()> onCloseWindow = nullptr;
 	std::function<void(int, int)> onWindowResize = nullptr;
 	std::function<void(int, bool)> onKeystateChange = nullptr;
+	std::function<void()> onWindowPaint = nullptr;
 };
 
 HWND InitWindow(const InitWindowInfo& info);

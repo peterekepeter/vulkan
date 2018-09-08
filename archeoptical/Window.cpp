@@ -39,7 +39,7 @@ void OnWindowDestroy() {
 }
 
 void OnWindowPaint() {
-
+	if (initInfo.onWindowPaint != nullptr) initInfo.onWindowPaint();
 }
 
 void OnKeystateChange(int key, bool state) {
