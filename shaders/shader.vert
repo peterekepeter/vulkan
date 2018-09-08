@@ -111,9 +111,9 @@ vec4 pf2(int pid, float time, out vec4 color)
 
 float df_obelisk(vec3 p)
 {
-	vec2 location = vec2(200,0);
+	vec2 location = vec2(100,0);
 	vec2 walls = abs(p.xz-location);
-	return max(max(walls.x, walls.y)-2.5-p.y*0.05, -25-p.y);
+	return max(max(walls.x, walls.y)-3.0-p.y*0.1, -22-p.y);
 }
 
 float df(vec3 p, float time){
@@ -160,19 +160,21 @@ vec3 path(float time, float id){
 	float ang = time+id;
 	float movement = smoothstep(62,72,time);
 	vec3 pos = vec3(0,-6, 0);
-	pos.x += (time-50+sin(id*.93)*id*0.7)*movement;
+	pos.x += (time*0.1+.2*time*smoothstep(64,128,time)+sin(id*.93)*id*0.7)*movement;
 	pos.y += (sin(ang)+sin(ang*0.9)+sin(id*.4)*id*0.7)*0.5*movement;
 	pos.z += (cos(ang)+cos(ang*0.9)+sin(id*.71)*id*3)*0.5*movement;
-	vec3 pos2 = vec3(200,-4,0);
+	vec3 pos2 = vec3(100,-4,0);
 	float time2=time-256;
-	float radi2 = 4+10/(1+time-240);
+	float radi2 = 4+10/(1+8+time/2-240);
 	float converge = smoothstep(256+16*3,256+16*4, time);
-	pos2.y-=time2/2+sin(id*12)*2*(1-converge);
+	pos2.y-=10+time2/4+sin(id*12)*2*(1-converge);
 	radi2=mix(radi2, radi2*(1-converge)*4, converge);
-	
+	vec3 pos3 = vec3(100,-4, 0);
+	pos3 += sin(vec3(id*23.4,id*17.41,id*4.71)+time*0.1)*vec3(6,2,6) + sin(pos);
 	pos2.x+=sin(ang)*radi2;
 	pos2.z+=cos(ang)*radi2;
-	pos = mix(pos, pos2, smoothstep(240,256, time));
+	pos = mix(pos, pos3, smoothstep(256-16*8,256-16*3, time));
+	pos = mix(pos, pos2, smoothstep(256-16*(2.25),256-16*2, time));
 	return pos;
 }
 vec3 path(float time){
@@ -260,7 +262,7 @@ vec4 pf5(int pid, float time, out vec4 color)
 	float fadeout = smoothstep(256+16*5+1,256+16*5,time);
 	float fadeout_final = smoothstep(256+16*6, 256+16*5, time);
 	float fadin_geo_n_cluster = smoothstep(32,64, time)*fadeout;
-	float fadein_geo = smoothstep(96,128, time)*fadeout;
+	float fadein_geo = smoothstep(64,96, time)*fadeout;
 	float scale = 0.1;
 	float dof_center=1;
 	float dof_amp=0;
@@ -268,15 +270,16 @@ vec4 pf5(int pid, float time, out vec4 color)
 	vec3 pos=vec3(0);
 	int bg_count = 300000;
 	int st_count = 100000;
-	float cluster_pcount = 400+4000*pow(smoothstep(96,256,time),2);
+	float cluster_pcount = 400+8000*pow(smoothstep(56,160,time),4);
 	float maxid = max(0,(cluster_pcount/400)-2);
-	float cam_interpolate = smoothstep(240,256, time);
+	float cam_interpolate = smoothstep(256-16*4,256-16*2, time);
+	float cam_interpolate2 = smoothstep(256-16*8,256-16*6, time);
 	if (pid<st_count){
 		// static
-		float converge = smoothstep(0,64, time+sin(pid*312.24)*(8+16*sin(pid*7.12)));
+		float converge = pow(smoothstep(0,64, time+pow(abs(sin(pid*4)),1)*16),16);
 		float converge2 = smoothstep(256+16*6,256+16*5,time+pow(sin(pid)*.5+.5,16)*.5+.5);
 		converge*=converge2;
-		if (converge>=.999){
+		if (converge>=.9999){
 			// discard
 			pos.z=-44; scale=0;	return vec4(pos, scale);
 		}
@@ -304,12 +307,12 @@ vec4 pf5(int pid, float time, out vec4 color)
 	}
 	else if (pid<bg_count+st_count)
 	{		
-		float clusterid = min(pid%11,maxid);
+		float clusterid = min(pid%12,maxid);
 		pos = path(time+pow(abs(sin(time+pid)),32)*-8, clusterid);
 		vec3 c=cluster_color(clusterid)*vec3(0.9,0.7,0.4);
 		vec3 dir = fract(sin(vec3(pid%115347*0.5321,pid%82345*0.12345,pid%5123*0.14123))*412.5317)-.5;
 		scale=0.05;
-		dir.y+=mix(0.7,0,cam_interpolate);
+		dir.y+=mix(0.7,0,cam_interpolate2);
 		//dir.xz = rotate(dir.xz, time/4);
 		dir=normalize(dir);
 		//pos+=dir;
@@ -336,7 +339,7 @@ vec4 pf5(int pid, float time, out vec4 color)
 	}
 	// camera
 	vec3 cam_path = path(time);
-	pos-=vec3(mix(cam_path.x,200,cam_interpolate),-5+cam_path.y*cam_interpolate*0.9, 2);
+	pos-=vec3(mix(cam_path.x,100,cam_interpolate),-5+cam_path.y*cam_interpolate*0.9, 2);
 	pos.xz=rotate(pos.xz,(time-62)/16.0*smoothstep(62,68,time)+4);
 	//pos.z+=1;
 	//pos.y+=4+sin(time/3);
@@ -346,7 +349,7 @@ vec4 pf5(int pid, float time, out vec4 color)
 	float time2=time-256;
 	pos.yz=rotate(pos.yz,mix(-0.7, -0.2+time2*0.01, cam_interpolate));
 	pos.y-=3*cam_interpolate;
-	pos.z+=3+(time2*0.1)*cam_interpolate;
+	pos.z+=3+((16+time2/2)*0.1)*cam_interpolate2;
 	
 	float dofscale=abs(dof_center-pos.z)*dof_amp;
 	scale+=dofscale;
