@@ -91,12 +91,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		OnWindowDpiChanged(g_dpi);
 		break;
 	}
-	case WM_PAINT:
-		OnWindowPaint();
-		RECT rect;
-		GetUpdateRect(hWnd, &rect, false);
-		ValidateRect(hWnd, &rect);
-		break;
 	case WM_KEYUP:
 		keySet = true;
 	case WM_KEYDOWN: {
@@ -222,7 +216,8 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen, boo
 	{
 		hwnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
-
+		ShowWindow(hwnd, nCmdShow);
+		SetWindowTextW(hwnd, szTitle);
 		RECT rect;
 		GetClientRect(hwnd, &rect);
 		width = rect.right - rect.left;
