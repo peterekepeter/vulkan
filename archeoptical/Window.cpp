@@ -182,14 +182,16 @@ void ApplyEnvVarChanges()
 
 static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen, bool borderless, int xres, int yres)
 {
-	if (xres == 0 || yres == 0)
-	{
-		xres = GetSystemMetrics(SM_CXSCREEN);
-		yres = GetSystemMetrics(SM_CYSCREEN);
-	}
+	int width = 0, height = 0;
 
 	if (fullscreen)
 	{
+		if (xres == 0 || yres == 0)
+		{
+			xres = GetSystemMetrics(SM_CXSCREEN);
+			yres = GetSystemMetrics(SM_CYSCREEN);
+		}
+
 		if (!borderless)
 		{
 			int i = 0; 
@@ -212,12 +214,19 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen, boo
 			hwnd = CreateWindowW(szWindowClass, szTitle, WS_POPUP | WS_VISIBLE,
 				0, 0, xres, yres, nullptr, nullptr, hInstance, nullptr);
 		}
+		width = xres;
+		height = yres;
 		ShowCursor(0);
 	}
 	else
 	{
-		hwnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+		hwnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+
+		RECT rect;
+		GetClientRect(hwnd, &rect);
+		width = rect.right - rect.left;
+		height = rect.bottom - rect.top;
 	}
 
 	if (!hwnd)
@@ -225,15 +234,7 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen, boo
 		return FALSE;
 	}
 
-	RECT rect;
-	GetClientRect(hwnd, &rect);
-	int width = rect.right - rect.left;
-	int height = rect.bottom - rect.top;
 	OnWindowResize(width, height);
-
-	ShowWindow(hwnd, nCmdShow);
-
-	UpdateWindow(hwnd);
 	return TRUE;
 }
 
