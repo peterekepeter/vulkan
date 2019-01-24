@@ -115,8 +115,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 HINSTANCE hInstance;
 HWND hwnd = nullptr;
-const wchar_t* szTitle = L"Archeoptical";
-const wchar_t* szWindowClass = L"MyWindowClass";
+const wchar_t* szTitle = L"Vulkan Application";
+const wchar_t* szWindowClass = L"WindowClass";
 bool didInit = false;
 
 static ATOM MyRegisterClass(HINSTANCE hInstance);
@@ -128,16 +128,13 @@ HWND InitWindow(const InitWindowInfo& info) {
 
 	initInfo = info;
 
-	// TODO: Place code here.
-	//SetProcessDPIAware();
+	if (initInfo.title.size() > 0) { szTitle = initInfo.title.c_str(); }
+	
 	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
-	// get hinstance
 	hInstance = GetModuleHandle(NULL);
 
 	// Initialize global strings
-	szTitle = L"Window";
-	szWindowClass = L"MYCLASS";
 	MyRegisterClass(hInstance);
 
 	// Perform application initialization:

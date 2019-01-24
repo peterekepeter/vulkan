@@ -13,6 +13,7 @@ public:
 	bool borderless = false;
 	int xres = 0;
 	int yres = 0;
+	std::wstring title;
 };
 
 HWND InitWindow(const InitWindowInfo& info);
