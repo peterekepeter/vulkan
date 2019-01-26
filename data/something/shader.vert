@@ -30,6 +30,9 @@ vec2 rotate(vec2 v, float a){
 	return vec2(v.x*c + v.y*s, -v.x*s + v.y*c);
 }
 
+float slash(float x) { return fract(sin(x*37.9137311331)*71.7373137379); }
+float flash(float x) { return fract(x*177.79313731); }
+
 // https://www.iquilezles.org/www/articles/smin/smin.htm
 float smin( float a, float b, float k )
 {
@@ -106,7 +109,16 @@ float osin(float x){ return sin(x*PI/4.0); }
 vec2 osin(vec2 x){ return sin(x*PI/4.0); }
 vec3 osin(vec3 x){ return sin(x*PI/4.0); }
 vec4 osin(vec4 x){ return sin(x*PI/4.0); }
+
+float smootherstep(float edge0, float edge1, float x) {
+  // Scale, and clamp x to 0..1 range
+  x = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+  // Evaluate polynomial
+  return x * x * x * (x * (x * 6 - 15) + 10);
+}
+
 #define ss smoothstep
+#define sss smootherstep
 
 part_t pf2(int pid, float time)
 {
@@ -201,8 +213,7 @@ part_t pf3(int pid, float time){
 	return part;
 }
 
-// space
-part_t pf4(int pid, float time){
+part_t pf_galaxy(int pid, float time){
 	part_t part = new_part();
 	if (pid>200000) return part;
 	vec3 p = vec3(0,0,0);
@@ -241,18 +252,90 @@ part_t pf4(int pid, float time){
 	return part;
 }
 
-// tunnel
+part_t pf_starfield(int pid, float time){
+	part_t part = new_part();
+	if (pid>400000) return part;
+	float t=time*0.5;
+	float pif = pid/400000.0;
+	float hash1 = slash(pif*4.1236);
+	float hash2 = slash(hash1);
+	float hash3 = slash(hash2*41.2);
+	vec3 p = vec3(hash1, hash2, hash3) - .5;
+	float hash4 = flash(hash3);
+	float hash5 = flash(hash4);
+	float hash6 = flash(hash5);
+	float clip_far = 8;
+	p+=sin(p*32+t*0.1)*0.04*ss(8,12,t);
+	p+=sin(p.yzx*16-t*0.1)*0.1*ss(4,8,t);
+	p.xy*=mix(1,length(p.xy),ss(6,12,t)*0.8);
+	p.xy*=mix(1,(0.8-0.85*sss(18,22,t))/length(p.xy),ss(16,18,t));
+	vec2 xy=p.xy;
+	p.xy*=mix(vec2(1,1),sin(p.xy*(888))*0.5+1.5,ss(22,24,t)-ss(30,36,t));
+	p.z-=smin(time*0.1,time*time*0.02-7,0.5);
+	float z = p.z;
+	p.xy=mix(p.xy,xy*2,(sin(z*16+time*2)*.5+.5)*(ss(24,26,t)-ss(28,32,t)));
+	
+	p.z=fract(p.z);
+
+	//donut
+
+	p.xy*=12;
+	p.z*=clip_far;
+	float clip_far_value = min((clip_far-p.z)*0.5,1);
+	p.xy=rotate(p.xy,p.z*0.05*ss(4,6,t)-1*ss(7,19,t));
+	p.xz=rotate(p.xz,p.z*0.2*(ss(4,10,t)-2*ss(6,12,t)+ss(9,13,t)));
+	float search_phase = time*0.1;
+	float clip=min(p.z,clip_far_value);
+
+	float donutify=sss(27,31,t);
+	vec3 p2=p.xyz;
+	p2/=vec3(2,2,clip_far*12);
+	/*p2.z=sin(z*PI*2)*0.3;
+	p2.xy*=cos(z*PI*2)*0.5+2;*/
+	//p2.xz=rotate(p2.xz,-0.5);
+	float trans=ss(34,36,t);
+	p2.xz=rotate(p2.xz+vec2(1,0), 1.5-p.z*donutify+(t-15)*ss(40,44,t))-vec2(1,0)*(1-trans);
+	p2.xy=rotate(p2.xy,(t-34)*0.1);
+	p2.yz=rotate(p2.yz,.7*(t-24)*sss(34,36,t));
+	p2.xz=rotate(p2.xz,(sin(t*1.5)*0.3+t-35)*ss(38,39,t));
+	p2.z+=1.7*trans;
+	p=mix(p,p2,sss(28,30,t));
+	//p=p2;
+	
+	//p.xy += 0.01*p.z*p.z*p.z*sin(vec2(search_phase,search_phase+PI/2))*ss(8,16,time);
+	p.z+=2-1.9*ss(0,1,time);
+
+	float fadein = ss(0,1,t)+ss(0,10,t)-ss(16,32,t)*1.8;
+	part.size=0.004;
+	part.energy=mix(vec3(0.4+sin(z)*0.4,0.2+sin(z*0.07)*0.1,0.1), vec3(0.1,0.3+sin(z*0.34)*0.2,0.4+sin(z*1.37)*0.3), hash4)*fadein*clip*hash5*3;
+	part.blur=hash6;
+	if (pid>390000){
+		part.size*=(1+hash6)*32;
+		part.blur=1;
+		part.energy.xyz*=16;
+	}
+	part.pos = p;
+	return part;
+}
 
 
 // snowfall
 
 // rain
 
+#define EVAL(fn,time,pid) {part1=fn(pid,time);part2=fn(pid,time+delta);}
+
 void seqencer(int pid, out part_t part1, out part_t part2){
 	float time = ubo.time;
 	float delta = 0.1;
-	#define EVAL(fn) {part1=fn(pid,time);part2=fn(pid,time+delta);}
-	EVAL(pf4);
+	part1 = new_part();
+	part2 = new_part();
+	if (time<76 && pid < 200000){
+		EVAL(pf_galaxy,time,pid);
+	}
+	if (75<time && time<180 && pid>200000){
+		EVAL(pf_starfield,time-75,pid-200000);
+	}
 }
 
 
