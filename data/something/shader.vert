@@ -268,10 +268,10 @@ part_t pf_starfield(int pid, float time){
 	p+=sin(p*32+t*0.1)*0.04*ss(8,12,t);
 	p+=sin(p.yzx*16-t*0.1)*0.1*ss(4,8,t);
 	p.xy*=mix(1,length(p.xy),ss(6,12,t)*0.8);
-	p.xy*=mix(1,(0.8-0.85*sss(18,22,t))/length(p.xy),ss(16,18,t));
+	p.xy*=mix(1,(0.8-0.85*sss(20,24,t))/length(p.xy),ss(18,20,t));
 	vec2 xy=p.xy;
-	p.xy*=mix(vec2(1,1),sin(p.xy*(888))*0.5+1.5,ss(22,24,t)-ss(30,36,t));
-	p.z-=smin(time*0.1,time*time*0.02-7,0.5);
+	p.xy*=mix(vec2(1,1),sin(p.xy*(888))*0.5+1.5,ss(24,26,t)-ss(30,36,t));
+	p.z-=smin(time*0.1,time*0.01+ss(2,5,t)*time*time*0.02-6,0.5);
 	float z = p.z;
 	p.xy=mix(p.xy,xy*2,(sin(z*16+time*2)*.5+.5)*(ss(24,26,t)-ss(28,32,t)));
 	
@@ -333,7 +333,7 @@ void seqencer(int pid, out part_t part1, out part_t part2){
 	if (time<117 && pid < 200000){
 		EVAL(pf_galaxy,time*0.65,pid);
 	}
-	if (115.5<time && time<180 && pid>200000){
+	if (115.5<time && time<280 && pid>200000){
 		EVAL(pf_starfield,time-115.5,pid-200000);
 	}
 }
