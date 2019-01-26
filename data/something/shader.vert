@@ -330,11 +330,11 @@ void seqencer(int pid, out part_t part1, out part_t part2){
 	float delta = 0.1;
 	part1 = new_part();
 	part2 = new_part();
-	if (time<76 && pid < 200000){
-		EVAL(pf_galaxy,time,pid);
+	if (time<117 && pid < 200000){
+		EVAL(pf_galaxy,time*0.65,pid);
 	}
-	if (75<time && time<180 && pid>200000){
-		EVAL(pf_starfield,time-75,pid-200000);
+	if (115.5<time && time<180 && pid>200000){
+		EVAL(pf_starfield,time-115.5,pid-200000);
 	}
 }
 
