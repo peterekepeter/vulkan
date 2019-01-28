@@ -93,7 +93,7 @@ part_t pf1b(int pid, float time){
 	pos+=cos(pos.zxy*4+ws*time*0.5)*0.1;
 	pos+=cos(pos.yzx*16+ws*time*0.5)*0.01;
 	pos+=cos(pos.yzx*64+ws*time*0.15)*0.005;
-	pos.xz = rotate(pos.xz, pow(sin(time*0.1), 5.0));
+	pos.xz = rotate(pos.xz, pow(sin(time*0.1), 5.0)*0.5);
 	float hash1 = sin(pid*31.119);
 	float hash2 = fract(sin(hash1*82.123)*93.241);
 	float hash3 = fract(hash2*34.1532);
@@ -256,6 +256,7 @@ part_t pf_starfield(int pid, float time){
 	part_t part = new_part();
 	if (pid>400000) return part;
 	float t=time*0.5;
+	float implode = ss(49,50,t);
 	float pif = pid/400000.0;
 	float hash1 = slash(pif*4.1236);
 	float hash2 = slash(hash1);
@@ -270,7 +271,7 @@ part_t pf_starfield(int pid, float time){
 	p.xy*=mix(1,length(p.xy),ss(6,12,t)*0.8);
 	p.xy*=mix(1,(0.8-0.85*sss(20,24,t))/length(p.xy),ss(18,20,t));
 	vec2 xy=p.xy;
-	p.xy*=mix(vec2(1,1),sin(p.xy*(888))*0.5+1.5,ss(24,26,t)-ss(30,36,t));
+	p.xy*=mix(vec2(1,1),sin(p.xy*(888))*0.5+1.5,ss(26,28,t)-ss(32,38,t));
 	p.z-=smin(time*0.1,time*0.01+ss(2,5,t)*time*time*0.02-6,0.5);
 	float z = p.z;
 	p.xy=mix(p.xy,xy*2,(sin(z*16+time*2)*.5+.5)*(ss(24,26,t)-ss(28,32,t)));
@@ -287,25 +288,37 @@ part_t pf_starfield(int pid, float time){
 	float search_phase = time*0.1;
 	float clip=min(p.z,clip_far_value);
 
-	float donutify=sss(27,31,t);
+	float donutify=sss(30,34,t);
 	vec3 p2=p.xyz;
 	p2/=vec3(2,2,clip_far*12);
 	/*p2.z=sin(z*PI*2)*0.3;
 	p2.xy*=cos(z*PI*2)*0.5+2;*/
 	//p2.xz=rotate(p2.xz,-0.5);
-	float trans=ss(34,36,t);
-	p2.xz=rotate(p2.xz+vec2(1,0), 1.5-p.z*donutify+(t-15)*ss(40,44,t))-vec2(1,0)*(1-trans);
+	float trans=ss(37,39,t);
+	p2.xz=rotate(p2.xz+vec2(1,0), 1.5-p.z*donutify+(32-0.8 *time)*ss(40,44,t))-vec2(1,0)*(1-trans);
+	// donut shape established
+	float implode_steps = hash5+p2.z;
+	implode_steps*=2;
+	implode_steps-=fract(implode_steps); 
+
+	float t_implode = t-49-p2.x+ implode_steps;
+	t_implode=max(0,t_implode*0.5);
+	p2+=sin(vec3(91.4,141.5,95.5)*hash6)*t_implode*4*hash1;
+	
 	p2.xy=rotate(p2.xy,(t-34)*0.1);
-	p2.yz=rotate(p2.yz,.7*(t-24)*sss(34,36,t));
-	p2.xz=rotate(p2.xz,(sin(t*1.5)*0.3+t-35)*ss(38,39,t));
+	p2.yz=rotate(p2.yz,.7*(t-24)*sss(37,39,t));
+	p2.xz=rotate(p2.xz,(sin(t*1.5)*0.3+t-35)*ss(43,45,t));
+	p2.y+=t_implode*t_implode*4;
+	
 	p2.z+=1.7*trans;
-	p=mix(p,p2,sss(28,30,t));
+	p=mix(p,p2,sss(30,34,t));
 	//p=p2;
 	
 	//p.xy += 0.01*p.z*p.z*p.z*sin(vec2(search_phase,search_phase+PI/2))*ss(8,16,time);
 	p.z+=2-1.9*ss(0,1,time);
 
-	float fadein = ss(0,1,t)+ss(0,10,t)-ss(16,32,t)*1.8;
+	float implode_flash = max(0,t_implode / (t_implode*t_implode+0.1));
+	float fadein = ss(0,1,t)+ss(0,10,t)-ss(16,32,t)*1.6+implode_flash;
 	part.size=0.004;
 	part.energy=mix(vec3(0.4+sin(z)*0.4,0.2+sin(z*0.07)*0.1,0.1), vec3(0.1,0.3+sin(z*0.34)*0.2,0.4+sin(z*1.37)*0.3), hash4)*fadein*clip*hash5*3;
 	part.blur=hash6;
@@ -333,8 +346,14 @@ void seqencer(int pid, out part_t part1, out part_t part2){
 	if (time<117 && pid < 200000){
 		EVAL(pf_galaxy,time*0.65,pid);
 	}
-	if (115.5<time && time<280 && pid>200000){
+	if (115.5<time && time<221 && pid>200000){
 		EVAL(pf_starfield,time-115.5,pid-200000);
+	}
+	if (221<time && time<250){
+		EVAL(pf1b, time-221, pid);
+	}
+	if (250<time){
+		EVAL(pf2, time-251+61, pid);
 	}
 }
 
