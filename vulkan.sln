@@ -3,13 +3,22 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2035
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "archeoptical", "archeoptical\archeoptical.vcxproj", "{07C00A4E-7F37-4A27-985E-24FA085A4868}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "vulkan", "vulkan\vulkan.vcxproj", "{07C00A4E-7F37-4A27-985E-24FA085A4868}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AppServiceSandwich", "submodule\app-service-sandwich\AppServiceSandwich\AppServiceSandwich.vcxproj", "{00E14769-860E-4F44-9B7D-2733FF5ADE62}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "submodule", "submodule", "{A2CC86D3-670F-41B7-9B2C-4846B98EB696}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio", "submodule\simple-audio\audio.vcxproj", "{EB5288BC-36D6-4877-B669-2DA14AD510E2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "solution", "solution", "{F6E01F60-1496-4C60-B725-8DB4233FDE7F}"
+	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		.gitmodules = .gitmodules
+		publish.ps1 = publish.ps1
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

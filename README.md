@@ -1,5 +1,5 @@
 
-# archeoptical
+# vulkan
 
 This project was mainly started for learning vulkan. 
 I went with a RAII method of handling resources. 
