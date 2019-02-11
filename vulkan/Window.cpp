@@ -129,8 +129,6 @@ HWND InitWindow(const InitWindowInfo& info) {
 	initInfo = info;
 
 	if (initInfo.title.size() > 0) { szTitle = initInfo.title.c_str(); }
-	
-	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
 	hInstance = GetModuleHandle(NULL);
 
