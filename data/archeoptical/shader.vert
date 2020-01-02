@@ -24,6 +24,7 @@ vec2 positions[5] = vec2[](
 ); 
 
 #define PI (355.0/113.0)
+#define TIME (ubo.time * 98.0 / 60.0)
 
 vec2 rotate(vec2 v, float a){
 	float c=cos(a), s=sin(a);
@@ -366,14 +367,14 @@ void main() {
 	int issecondtris = tid%2;
 	vec2 uv = positions[vid%3+issecondtris*2];
 	
-	//vec3 pos=pf1(pid, ubo.time);
+	//vec3 pos=pf1(pid, TIME);
 	vec4 col_res1, col_res2;
-	float time = ubo.time;
+	float time = TIME;
 	vec4 pos_res1, pos_res2;
 	
 	// just call pf5
-	pos_res1 = pf5(pid, ubo.time, col_res1);
-	pos_res2 = pf5(pid, ubo.time+0.1, col_res2);
+	pos_res1 = pf5(pid, TIME, col_res1);
+	pos_res2 = pf5(pid, TIME+0.1, col_res2);
 	
 	float near_limit = 0.0;
 	if(pos_res1.z<near_limit||pos_res2.z<near_limit) {
