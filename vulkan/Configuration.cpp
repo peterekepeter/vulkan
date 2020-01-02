@@ -47,6 +47,11 @@ void ConfigurationBuilder::ReadConsoleConfig()
 			config.fullscreen = true;
 			config.borderless = true;
 		}
+		else if (strcmp(argv[1], "windowed") == 0) 
+		{
+			config.fullscreen = false;
+			config.borderless = false;
+		}
 		else
 		{
 			app.console.Open().Output << "Command line option " << argv[1] << " \n";

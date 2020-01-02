@@ -121,7 +121,7 @@ bool didInit = false;
 
 static ATOM MyRegisterClass(HINSTANCE hInstance);
 static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen, bool borderless, int xres = 0, int yres = 0);
-
+static void AdjustWindowSize(int& clientWidth, int& clientHeight, int xres, int yres);
 
 HWND InitWindow(const InitWindowInfo& info) {
 	if (didInit) return hwnd;
@@ -171,7 +171,7 @@ void ApplyEnvVarChanges()
 
 static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen, bool borderless, int xres, int yres)
 {
-	int width = 0, height = 0;
+	int clientWidth = 0, clientHeight = 0;
 
 	if (fullscreen)
 	{
@@ -203,20 +203,45 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen, boo
 			hwnd = CreateWindowW(szWindowClass, szTitle, WS_POPUP | WS_VISIBLE,
 				0, 0, xres, yres, nullptr, nullptr, hInstance, nullptr);
 		}
-		width = xres;
-		height = yres;
+		clientWidth = xres;
+		clientHeight = yres;
 		ShowCursor(0);
 	}
 	else
 	{
-		hwnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+		DWORD dwStyle = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
+		int newWidth, newHeight;
+		bool unspecifiedSize = xres == 0 || yres == 0;
+
+		if (unspecifiedSize)
+		{
+			newWidth = CW_USEDEFAULT;
+			newHeight = CW_USEDEFAULT;
+		}
+		else 
+		{
+			RECT clientRect = { 64, 64, 64 + xres, 64 + yres };
+			AdjustWindowRectEx(&clientRect, dwStyle, false, dwStyle);
+			newWidth = clientRect.right - clientRect.left;
+			newHeight = clientRect.bottom - clientRect.top;
+		}
+
+		hwnd = CreateWindowW(szWindowClass, szTitle, dwStyle,
+			CW_USEDEFAULT, 0, newWidth, newHeight,
+			nullptr, nullptr, hInstance, nullptr);
 		ShowWindow(hwnd, nCmdShow);
 		SetWindowTextW(hwnd, szTitle);
-		RECT rect;
-		GetClientRect(hwnd, &rect);
-		width = rect.right - rect.left;
-		height = rect.bottom - rect.top;
+
+		RECT clientRect;
+		GetClientRect(hwnd, &clientRect);
+		clientWidth = clientRect.right - clientRect.left;
+		clientHeight = clientRect.bottom - clientRect.top;
+
+		if (!unspecifiedSize)
+		{
+			// adjusts clientWidth and clientHeight to required size
+			AdjustWindowSize(clientWidth, clientHeight, xres, yres);
+		}
 	}
 
 	if (!hwnd)
@@ -224,10 +249,32 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen, boo
 		return FALSE;
 	}
 
-	OnWindowResize(width, height);
+	OnWindowResize(clientWidth, clientHeight);
 	return TRUE;
 }
 
+static void AdjustWindowSize(int& clientWidth, int& clientHeight, int xres, int yres)
+{
+	int adjustmentTry = 0, maxAdjustmentTry = 3;
+
+	while (clientWidth != xres || clientHeight != yres)
+	{
+		RECT clientRect;
+		GetClientRect(hwnd, &clientRect);
+		clientWidth = clientRect.right - clientRect.left;
+		clientHeight = clientRect.bottom - clientRect.top;
+
+		if (adjustmentTry++ >= maxAdjustmentTry) {
+			break; // stop after 3 tries
+		}
+
+		RECT windowRect;
+		GetWindowRect(hwnd, &windowRect);
+		int newWidth = windowRect.right - windowRect.left + xres - clientWidth;
+		int newHeight = windowRect.bottom - windowRect.top + yres - clientHeight;
+		MoveWindow(hwnd, windowRect.left, windowRect.top, newWidth, newHeight, false);
+	}
+}
 
 static ATOM MyRegisterClass(HINSTANCE hInstance)
 {
