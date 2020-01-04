@@ -50,10 +50,17 @@ void ClockPlaybackDevice::SetPosition(double seconds)
 
 double ClockPlaybackDevice::GetPosition()
 {
-	using namespace std::chrono;
-	auto now = steady_clock::now();
-	auto delta = duration_cast<microseconds>(now - startOfMeasurement);
-	return position + delta.count() * 1e-6;
+	if (isPlaying)
+	{
+		using namespace std::chrono;
+		auto now = steady_clock::now();
+		auto delta = duration_cast<microseconds>(now - startOfMeasurement);
+		return position + delta.count() * 1e-6;
+	} 
+	else 
+	{
+		return position;
+	}
 }
 
 bool ClockPlaybackDevice::IsPlaying()
