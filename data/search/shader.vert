@@ -24,6 +24,7 @@ vec2 positions[5] = vec2[](
 ); 
 
 #define PI (355.0/113.0)
+#define TIME (ubo.time * 98.0 / 60.0);
 
 vec2 rotate(vec2 v, float a){
 	float c=cos(a), s=sin(a);
@@ -386,7 +387,7 @@ void pfx(int pid, float time, out part_t part){
 #define EVAL2(fn,time,pid,part1,part2) {fn(pid,time,part1);fn(pid,time+delta,part2);}
 
 void seqencer(int pid, out part_t part1, out part_t part2){
-	float time = ubo.time;
+	float time = TIME;
 	float delta = 0.1;
 	part1 = new_part();
 	part2 = new_part();
@@ -436,7 +437,7 @@ void main() {
 	vec2 uv = positions[vid%3+issecondtris*2];
 	
 	vec3 col_res1, col_res2;
-	float time = ubo.time;
+	float time = TIME;
 	
 	part_t part1;
 	part_t part2;

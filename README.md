@@ -11,4 +11,12 @@ at one point this all falls apart because all the objects are coupled with other
 This is when I fell back to more basic procedural style of coding. 
 However, even like this I'm still using the block scopes for easy pipeline cleanup and re-creation when context is lost.
 
-Might be a good idea to add some screenshots here.
+## Requirements
+
+ - Visual Studio 2019, community, free to download, I usually update to latest
+ - Vulkan SDK, you should have a VULKAN_SDK env var defined pointing to the vulkan 
+ - switch platform to x86, even though the x64 is configured, I'm currently 
+   relying on a 32-bit bass.dll for audio playback, this forces the whole
+   project to be 32-bit only
+ - when running, set the working directory to one of the data folders, 
+   for examlple `.\data\archeoptical` or `.\data\search`
