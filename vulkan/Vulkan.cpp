@@ -408,7 +408,10 @@ VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, int wi
 		return capabilities.currentExtent;
 	}
 	else {
-		VkExtent2D actualExtent = { width, height };
+		if (width < 0 || height < 0) {
+			throw std::logic_error("widht and height must be greater than 0");
+		}
+		VkExtent2D actualExtent = { static_cast<unsigned>(width), static_cast<unsigned>(height) };
 
 		actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
 		actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
