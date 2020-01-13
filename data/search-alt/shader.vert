@@ -113,6 +113,7 @@ void pf1b(int pid, float time, out part_t p){
 	
 	pos.xy*=-5;
 	pos.y-=8;
+	pos.y*=ss(12.45,8.5,t)*2 +1;
 	pos.z+=8-4*ss(0,12,t)-sss(22,24,t)*64-ss(16,20,t)*4;
 	pos.yz = rotate(pos.yz, 0.3+ss(8,16,t)*0.3+ss(16,20,t)*1);
 	pos.x*=(pos.z+10)*0.08;
@@ -125,15 +126,16 @@ void pf1b(int pid, float time, out part_t p){
 	pos+=cos(pos.yzx*1.6*ws+wt*.94)*cos(pos.yzx*3+ws*wt*2)*wa*0.2;
 	pos.xz = rotate(pos.xz, sin(time*0.1)*0.1);
 	
-	float xfx =ss(8.5,12.2,t)-ss(12.35,12.45,t);
+	float xfx =ss(9.5,12.2,t)-ss(12.35,12.45,t);
+	float xfxflash=ss(12.35,12.45,t)*ss(12.45,12.35,t);
 	float hashx=pow(fract(sin(pid)*41.125),4.0);
-	pos.y-=hashx*356.0*(pow(ss(8.5 ,11.2,t-hashx),4.5)-ss(12.35,12.45,t));
+	pos.y-=(hashx+.005)*356.0*(pow(ss(8.5 ,11.2,t-hashx-float(pid)/1e6),4.5)-ss(12.35,12.45,t));
 
 	float hash1 = sin(pid*31.119);
 	float hash2 = fract(sin(hash1*82.123)*93.241);
 	float hash3 = fract(hash2*34.1532);
 	p.blur=xfx;
-	float power=pow(hash2,4.0)*44+0.1 + pow(hash3, 400.0)*859;
+	float power=pow(hash2,4.0)*44+0.1 + pow(hash3, 400.0)*859 + xfxflash*16;
 	if (pid>400000){
 		power*=ss(2,8,t*0.8-pid/100000.0);
 	}
@@ -176,13 +178,18 @@ void pf2(int pid, float time, out part_t p){
 	pos+=sin(pos.yxz*.25)*fadein3*4;
 	pos+=cos(pos)*ss(112,120,time);
 	color=mix(c,c.zyx,sin(pid*.122+.5))*80.0*(0.01+fadein);
-	color.rgb+=sin(vec3(pos.y)*vec3(.03,.02,.04))*8;
+	color.rgb+=sin(vec3(pos.y)*vec3(.03,.02,.04))*6;
 	
 	pos.y-=time;
 	p.pos=pos;
 	p.size = scale;
 	p.energy = color;
 	p.blur = blur;
+	if (pid<1000){
+		p.blur=1;
+		p.size+=4.0;
+		p.energy*=128.0;
+	}
 }
 
 
@@ -230,10 +237,11 @@ void pf_galaxy(int pid, float time, out part_t part){
 	float eye = mix(0, 0.1, ss(11,12,t));
 	float radius = stretch + 0.1;
 	float phaset = smin((t-36.5)*0.1+36.5,t, 1);
-	float phase = mix(t,phaset/radius*0.1/radius,ss(4,6,t));//+ beatenv*pow(abs(sin(t*PI*4.)),10.0)*.1*hash5*hash4;
+	float phase = mix(t,phaset/radius*0.1/radius,ss(4,6,t));// - beatenv*pow(abs(sin(t*PI*4.)),10.0)*.05*hash5*hash4;
 	//p.z+=hash3;
 	float size = ss(20,21,t)*pow(hash3,6)*0.35+0.001;
-	phase += ss(16,19.2,t)*hash2*PI*2;
+	float open = ss(16,19.2,t);
+	phase += open*hash2*PI*2;
 	p.xy=sin(vec2(phase+PI/2,phase))*(stretch+eye);
 
 
@@ -249,7 +257,7 @@ void pf_galaxy(int pid, float time, out part_t part){
 	vec3 color = mix(vec3(0.4+p.x*0.5,0.2,0.1), vec3(0.1,0.2,0.4), hash);
 	float energy = pow(hash4,2)*2;
 	p.z-=ss(28,32,t)*0.5;
-	part.energy=mix(vec3(0.1,0.1,0.1), color*energy, ss(24,25,t));
+	part.energy=mix(vec3(0.1,0.1,0.1), color*energy, ss(24,25,t))*mix(.2*(hash+hash2*.5+eye*.3),1.0, open);
 	p.z+=1;
 	part.pos = p;
 }
@@ -261,18 +269,18 @@ void pf_starfield(int pid, float time, out part_t part, out float t_implode){
 	float hash1 = slash(pif*4.1236);
 	float hash2 = slash(hash1);
 	float hash3 = slash(hash2*41.2);
-	vec3 p = vec3(hash1, hash2, hash3) - .5;
+	vec3 p = vec3(hash1, hash2, hash3)  - .5;
 	float hash4 = flash(hash3);
 	float hash5 = flash(hash4);
 	float hash6 = flash(hash5);
 	float clip_far = 8;
-	p+=sin(p*32+t*0.1)*0.04*ss(8,12,t);
+	p+=sin(p*32+t*0.1)*0.04*ss(6,10,t);
 	p+=sin(p.yzx*16-t*0.1)*0.1*ss(4,8,t);
 	p.xy*=mix(1,length(p.xy),ss(6,12,t)*0.8);
 	p.xy*=mix(1,(0.8-0.85*sss(20,24,t))/length(p.xy),ss(19.9,22,t));
 	vec2 xy=p.xy;
 	p.xy*=mix(vec2(1,1),sin(p.xy*(888))*0.5+1.5,ss(26,28,t)-ss(32,38,t));
-	p.z-=smin(time*0.1,time*0.01+ss(-2,5,t)*time*time*0.02-6,0.5);
+	p.z-=smin(time*0.1,time*0.01+ss(-3,6,t)*time*time*0.02-4.5,0.5);
 	float z = p.z;
 	p.xy=mix(p.xy,xy*2,(sin(z*16+time*2)*.5+.5)*(ss(24,26,t)-ss(28,32,t)));
 	
@@ -319,8 +327,8 @@ void pf_starfield(int pid, float time, out part_t part, out float t_implode){
 
 	float implode_flash = max(0,t_implode / (t_implode*t_implode+0.1));
 	float fadein = ss(0,1,t)+ss(0,10,t)-ss(16,32,t)*1.6+implode_flash;
-	part.size=0.004;
-	part.energy=mix(vec3(0.4+sin(z)*0.4,0.2+sin(z*0.07)*0.1,0.1), vec3(0.1,0.3+sin(z*0.34)*0.2,0.4+sin(z*1.37)*0.3), hash4)*fadein*clip*hash5*3;
+	part.size=mix(0.004, 0.002, donutify);
+	part.energy=mix(vec3(0.4+sin(z)*0.4,0.2+sin(z*0.07)*0.1,0.1), vec3(0.1,0.3+sin(z*0.34)*0.2,0.4+sin(z*1.37)*0.3), hash4)*fadein*clip*hash5*3*mix(1.0,.5, donutify);
 	part.blur=hash6;
 	if (pid>390000){
 		part.size*=(1+hash6)*32;
@@ -349,13 +357,13 @@ float df(vec3 p, float time){
 }
 
 void pfx(int pid, float time, out part_t part){
-	if (pid>500000) return;
+	if (pid<500000) return;
 	float hash1 = slash(slash(pid/1000)+pid%1000);
 	float hash2 = slash(hash1+pid%1000 );
 	float hash3 = slash(hash2);
 	float ab=pid%2;
 	//pos.y += (pow(hash3,10)+0.0001)*pow(max(0,time-10),2);
-	vec3 lpos=vec3(sin(time*0.3+ab)*4.0,cos(time*0.3+ab*4)*4.0,-4.7);
+	vec3 lpos=vec3(sin(time*0.1+ab)*4.0,cos(time*0.1+ab*4)*4.0,-4.7);
 	vec3 dir=normalize(vec3(hash1-.5, hash2-.5, hash3-.5));
 	dir.xy=rotate(dir.xy,time*0.1);dir.zy=rotate(dir.zy,time*0.05);
 	vec3 pos = lpos;
@@ -384,11 +392,19 @@ void pfx(int pid, float time, out part_t part){
 		if (occ<0.01) break;
 	}
 	occ *= 10;
+	float hash4 = slash(hash3);
 	 
 	part.pos=pos;
 	part.size=0.001+abs (pos.z-8)/pos.z*0.005 + pow(slash(pid*0.0001),64);
 	part.energy = mix(vec3(0.9,0.3,0.6), vec3(0.7,0.2,0.2), ab)*8*occ;
 	part.blur = 0.0;
+	part.energy*=(1+pow(hash4,45)*16);
+	part.energy*=ss(1,2,pos.z);
+	if (pid<1000){
+		part.blur=1;
+		part.size+=1.0;
+		part.energy*=44;
+	}
 }
 
 
@@ -409,7 +425,7 @@ void seqencer(int pid, out part_t part1, out part_t part2){
 	float implode1 = 1.0;
 	float implode2 = 1.0;
 	if (time<117 && pid>=400000 && pid<600000){
-		EVAL(pf_galaxy, time*0.715, pid-400000);
+		EVAL(pf_galaxy, time*0.713, pid-400000);
 	}
 	if (104<time && time<370 && pid<400000){
 		delta=0.05;
@@ -433,19 +449,19 @@ void seqencer(int pid, out part_t part1, out part_t part2){
 		part1 = mix_part(part1, p1tmp, inter1);
 		part2 = mix_part(part2, p2tmp, inter2);
 	}
-	if (480<time) {
+	if (480<time + (pid/100000.0)) {
 		//EVAL(pf3, time-260, pid);
 		part_t p1tmp=new_part(), p2tmp=new_part();
 		EVAL2(pfx, time-410, pid, p1tmp,p2tmp);
 		float pidf=pid/1000000.0*8;
-		float inter1 = ss(0,1,-part1.pos.z);
-		float inter2 = ss(0,1,-part2.pos.z);
-		float darken1=ss(551,488, time);
-		float darken2=ss(551,488, time+delta);
+		float inter1 = ss(0,1,-part1.pos.z-pidf);
+		float inter2 = ss(0,1,-part2.pos.z-pidf);
+		float darken1=ss(551,480, time)*ss(480,482,time);
+		float darken2=ss(551,480, time+delta)*ss(480,482,time+delta);
+		p1tmp.energy*=darken1;
+		p2tmp.energy*=darken2;
 		part1 = mix_part(part1, p1tmp, inter1);
 		part2 = mix_part(part2, p2tmp, inter2);
-		part1.energy*=darken1;
-		part2.energy*=darken2;
 	}
 }
 
