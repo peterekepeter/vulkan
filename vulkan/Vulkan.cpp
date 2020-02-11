@@ -55,6 +55,8 @@ void VulkanPhysicalDevice::querySwapChainSupport()
 	// get capabilities
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &capabilities);
 
+	auto canBeSource = capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+
 	// get supported formats
 	uint32_t formatCount;
 	vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, nullptr);

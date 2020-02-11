@@ -11,10 +11,12 @@ struct Configuration
 	bool borderless = false;
 	int xres = 0;
 	int yres = 0;
+	int fps = 60;
 	std::wstring windowTitle;
 	std::string musicFile;
 	bool musicStream = true;
 	bool musicEnabled = true;
+	bool offline = false;
 };
 
 class ConfigurationBuilder
