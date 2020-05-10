@@ -147,7 +147,7 @@ HWND InitWindow(const InitWindowInfo& info) {
 
 void ProcessWindowMessagesNonBlocking() {
 	MSG msg;
-	while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+	if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 	{
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
