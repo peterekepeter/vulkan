@@ -1,7 +1,5 @@
 #pragma once
 
-#include "stdafx.h"
-
 class VulkanDebugUtilsMessenger {
 public:
 
@@ -31,20 +29,15 @@ private:
 class VulkanApplication
 {
 public:
-	VkInstance instance;
-	VkApplicationInfo appInfo;
-	VkInstanceCreateInfo createInfo;
-	std::vector<VkExtensionProperties> availableExtensions;
-	std::vector<VkLayerProperties> availableLayers;
+	VkInstance instance; 
 	std::vector<const char*> requiredLayers;
-	std::vector<const char*> requiredExtensions;
-
-	VulkanApplication(bool enableValidation = false, bool windowSupport = false);
+	VulkanApplication(const VkInstanceCreateInfo& createInfo,
+		const std::vector<const char*>& requiredLayers);
 
 	VulkanApplication(const VulkanApplication&) = delete;
 	VulkanApplication& operator =(const VulkanApplication&) = delete;
-	VulkanApplication(VulkanApplication&&) = delete;
-	VulkanApplication& operator =(VulkanApplication&& other) = delete;
+	VulkanApplication(VulkanApplication&&) noexcept;
+	VulkanApplication& operator =(VulkanApplication&& other) noexcept;
 
 	~VulkanApplication();
 };
