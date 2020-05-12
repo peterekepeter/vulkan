@@ -4,8 +4,8 @@
 struct Configuration
 {
 	bool allowControls = true;
-	bool vulkanValidation = false;
-	bool messenger = false;
+	bool vulkanValidation = true;
+	bool messenger = true;
 	bool liveReload = true;
 	bool fullscreen = false;
 	bool borderless = false;

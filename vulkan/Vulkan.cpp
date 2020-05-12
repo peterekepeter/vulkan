@@ -241,6 +241,7 @@ VulkanApplication::VulkanApplication(
 VulkanApplication::VulkanApplication(VulkanApplication&& other) noexcept
 	: instance(other.instance)
 	, requiredLayers(std::move(other.requiredLayers))
+	, debugMessenger(std::move(other.debugMessenger))
 {
 	other.instance = nullptr;
 }
@@ -248,8 +249,9 @@ VulkanApplication::VulkanApplication(VulkanApplication&& other) noexcept
 VulkanApplication& VulkanApplication::operator=(VulkanApplication&& other) noexcept
 {
 	instance = other.instance;
-	requiredLayers = std::move(other.requiredLayers);
 	other.instance = nullptr;
+	requiredLayers = std::move(other.requiredLayers);
+	debugMessenger = std::move(other.debugMessenger);
 	return *this;
 }
 
@@ -257,78 +259,9 @@ VulkanApplication::~VulkanApplication()
 {
 	if (instance == nullptr) return;
 	// cleanup
+	debugMessenger = nullptr; // kill the messenger first
 	vkDestroyInstance(instance, nullptr);
 	instance = nullptr;
-}
-
-const char * VulkanDebugUtilsMessenger::SeverityToString(VkDebugUtilsMessageSeverityFlagBitsEXT severity) {
-	switch (severity)
-	{
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT: return "Debug: ";
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT: return "Info: ";
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT: return "Warn: ";
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT: return "Fail: ";
-	case VK_DEBUG_UTILS_MESSAGE_SEVERITY_FLAG_BITS_MAX_ENUM_EXT: return "";
-	default:
-		return "";
-	}
-}
-
-const char * VulkanDebugUtilsMessenger::TypeToString(VkDebugUtilsMessageTypeFlagsEXT type) {
-	switch (type)
-	{
-	case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT: return "Validation: ";
-	case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT: return "Performance: ";
-	case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT: return "";
-	default: return "";
-	}
-}
-
-VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugUtilsMessenger::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT * pCallbackData, void * pUserData) {
-
-	auto self = (VulkanDebugUtilsMessenger*)pUserData;
-	if (pCallbackData->pMessage[0] == 0) {
-		return VK_FALSE; // emtpy string
-	}
-	auto con = self->console.Open();
-	std::ostringstream* target = &con.Output;
-	if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-		target = &con.Error;
-	}
-	(*target) << "Vulkan: " << TypeToString(messageSeverity) << SeverityToString(messageSeverity);
-	(*target) << pCallbackData->pMessage << "\n";
-
-	return VK_FALSE;
-}
-
-VulkanDebugUtilsMessenger::VulkanDebugUtilsMessenger(VkInstance & instance, Console & console) : console(console), instance(instance) {
-	// setup create info
-	createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-	createInfo.messageSeverity = 
-		// VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | 
-		// VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | 
-		VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | 
-		VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-	createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-	createInfo.pfnUserCallback = debugCallback;
-	createInfo.pUserData = this; // Optional
-
-								 // attach callback
-	messenger = {};
-	auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-	if (func == nullptr)
-		throw std::runtime_error("vkCreateDebugUtilsMessengerEXT not found");
-	if (func(instance, &createInfo, nullptr, &messenger) != VK_SUCCESS)
-		throw std::runtime_error("vkCreateDebugUtilsMessengerEXT failed");
-
-}
-
-VulkanDebugUtilsMessenger::~VulkanDebugUtilsMessenger() {
-	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
-	if (func != nullptr) {
-		func(instance, messenger, nullptr);
-	}
 }
 
 VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {

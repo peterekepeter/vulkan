@@ -163,15 +163,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AppVulkanLogger.h" />
     <ClInclude Include="Configuration.hpp" />
     <ClInclude Include="Playback.hpp" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Vulkan.hpp" />
     <ClInclude Include="VulkanApplicationBuilder.h" />
+    <ClInclude Include="VulkanDebugUtilsMessenger.h" />
     <ClInclude Include="Window.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AppVulkanLogger.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Playback.cpp" />
@@ -183,6 +186,7 @@
     </ClCompile>
     <ClCompile Include="Vulkan.cpp" />
     <ClCompile Include="VulkanApplicationBuilder.cpp" />
+    <ClCompile Include="VulkanDebugUtilsMessenger.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>

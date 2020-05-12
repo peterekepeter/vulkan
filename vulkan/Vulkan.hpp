@@ -1,36 +1,12 @@
 #pragma once
-
-class VulkanDebugUtilsMessenger {
-public:
-
-	VkDebugUtilsMessengerCreateInfoEXT createInfo;
-	VkDebugUtilsMessengerEXT messenger;
-	Console& console;
-	VkInstance& instance;
-
-
-	VulkanDebugUtilsMessenger(VkInstance& instance, Console& console);
-	~VulkanDebugUtilsMessenger();
-
-private:
-
-	static const char* SeverityToString(VkDebugUtilsMessageSeverityFlagBitsEXT severity);
-
-	static const char* TypeToString(VkDebugUtilsMessageTypeFlagsEXT type);
-
-	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-		VkDebugUtilsMessageTypeFlagsEXT messageType,
-		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-		void* pUserData);
-
-};
+#include "VulkanDebugUtilsMessenger.h"
 
 class VulkanApplication
 {
 public:
 	VkInstance instance; 
 	std::vector<const char*> requiredLayers;
+
 	VulkanApplication(const VkInstanceCreateInfo& createInfo,
 		const std::vector<const char*>& requiredLayers);
 
@@ -40,9 +16,9 @@ public:
 	VulkanApplication& operator =(VulkanApplication&& other) noexcept;
 
 	~VulkanApplication();
-};
 
-void printAvaiableExtensions(Console& console, const VulkanApplication& vulkan);
+	std::unique_ptr<VulkanDebugUtilsMessenger> debugMessenger;
+};
 
 class VulkanPhysicalDevice
 {

@@ -11,6 +11,7 @@ VulkanApplicationBuilder::VulkanApplicationBuilder()
 	info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	info.pEngineName = "N/A";
 	info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+	logger = nullptr;
 }
 
 VulkanApplication VulkanApplicationBuilder::Build()
@@ -29,6 +30,11 @@ VulkanApplication VulkanApplicationBuilder::Build()
 	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 	availableLayers.resize(layerCount);
 	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+	// add debug utils if loggers was added
+	if (this->logger != nullptr) {
+		requiredExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	}
 
 	// check required layers
 	for (auto& required : requiredLayers) {
@@ -70,7 +76,17 @@ VulkanApplication VulkanApplicationBuilder::Build()
 	createInfo.enabledLayerCount = static_cast<uint32_t>(requiredLayers.size());
 	createInfo.ppEnabledLayerNames = requiredLayers.data();
 
-	return VulkanApplication(createInfo, requiredLayers);
+	auto result = VulkanApplication(
+		createInfo, 
+		requiredLayers);
+
+	if (logger != nullptr)
+	{
+		result.debugMessenger = std::make_unique<VulkanDebugUtilsMessenger>(
+			result.instance,
+			std::move(logger));
+	}
+	return result;
 }
 
 VulkanApplicationBuilder& VulkanApplicationBuilder::ApiVersion(
@@ -95,19 +111,28 @@ VulkanApplicationBuilder& VulkanApplicationBuilder::EngineInfo(const char* name,
 }
 
 VulkanApplicationBuilder& 
-VulkanApplicationBuilder::RequireValidationLayer(
+VulkanApplicationBuilder::EnableValidationLayer(
 	bool enabled)
 {
 	if (!enabled) {
 		return *this;
 	}
 	requiredLayers.push_back("VK_LAYER_LUNARG_standard_validation");
-	requiredExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	return *this;
+}
+
+VulkanApplicationBuilder& VulkanApplicationBuilder::UseLogger(
+	std::function<void(
+		VkDebugUtilsMessageSeverityFlagBitsEXT, 
+		VkDebugUtilsMessageTypeFlagsEXT, 
+		const VkDebugUtilsMessengerCallbackDataEXT*)> logger)
+{
+	this->logger = logger;
 	return *this;
 }
 
 VulkanApplicationBuilder& 
-VulkanApplicationBuilder::RequireWindowSupport(
+VulkanApplicationBuilder::EnableWindowSupport(
 	bool enabled)
 {
 	if (!enabled) {
@@ -116,4 +141,9 @@ VulkanApplicationBuilder::RequireWindowSupport(
 	requiredExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 	requiredExtensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 	return *this;
+}
+
+VulkanApplicationBuilder::operator VulkanApplication()
+{
+	return Build();
 }
