@@ -12,6 +12,7 @@ struct Configuration
 	int xres = 0;
 	int yres = 0;
 	int fps = 60;
+	int device_index = -1;
 	std::wstring windowTitle;
 	std::string musicFile;
 	bool musicStream = true;

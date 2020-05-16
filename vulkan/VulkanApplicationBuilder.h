@@ -21,7 +21,7 @@ bool enabled = true);
 	operator VulkanApplication();
 private:
 	VkApplicationInfo info;
-	std::vector<const char*> requiredExtensions;
+	std::vector<const char*> requiredDeviceExtensions;
 	std::vector<const char*> requiredLayers;
 	std::function<void(
 		VkDebugUtilsMessageSeverityFlagBitsEXT,

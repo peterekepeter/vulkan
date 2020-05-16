@@ -33,7 +33,7 @@ VulkanApplication VulkanApplicationBuilder::Build()
 
 	// add debug utils if loggers was added
 	if (this->logger != nullptr) {
-		requiredExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+		requiredDeviceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 	}
 
 	// check required layers
@@ -53,7 +53,7 @@ VulkanApplication VulkanApplicationBuilder::Build()
 	}
 
 	// check required extensions
-	for (auto& required : requiredExtensions) {
+	for (auto& required : requiredDeviceExtensions) {
 		bool found = false;
 		for (auto& avaiable : availableExtensions) {
 			if (std::strcmp(required, avaiable.extensionName) == 0) {
@@ -71,8 +71,8 @@ VulkanApplication VulkanApplicationBuilder::Build()
 	memset(&createInfo, 0, sizeof(VkInstanceCreateInfo));
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &info;
-	createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
-	createInfo.ppEnabledExtensionNames = requiredExtensions.data();
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredDeviceExtensions.size());
+	createInfo.ppEnabledExtensionNames = requiredDeviceExtensions.data();
 	createInfo.enabledLayerCount = static_cast<uint32_t>(requiredLayers.size());
 	createInfo.ppEnabledLayerNames = requiredLayers.data();
 
@@ -138,8 +138,8 @@ VulkanApplicationBuilder::EnableWindowSupport(
 	if (!enabled) {
 		return *this;
 	}
-	requiredExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
-	requiredExtensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+	requiredDeviceExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+	requiredDeviceExtensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 	return *this;
 }
 

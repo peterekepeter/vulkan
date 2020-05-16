@@ -72,12 +72,12 @@ void VulkanPhysicalDevice::findAndCheckExtensions()
 	// set up required device extensions
 	bool requireSwapchain = true;
 	if (requireSwapchain) {
-		requiredExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+		requiredDeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 	}
 
 	// check that we have all required extensions
 	extensionsSupported = true;
-	for (auto& required : requiredExtensions) {
+	for (auto& required : requiredDeviceExtensions) {
 		bool found = false;
 		for (auto& extension : availableExtensions) {
 			if (strcmp(extension.extensionName, required) == 0) {
@@ -146,7 +146,7 @@ int VulkanPhysicalDevice::calculateScore() {
 }
 
 bool VulkanPhysicalDevice::isSuitable() {
-	return properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
+	return 
 		extensionsSupported == true &&
 		swapChainAdequate == true &&
 		graphicsFamilyIndex != -1 && 
@@ -203,7 +203,7 @@ VulkanDevice::VulkanDevice(VulkanApplication & vulkan, VulkanPhysicalDevice& phy
 	deviceFeatures = {};
 
 	// setup require extensions
-	requiredExtensions = physicalDevice.requiredExtensions;
+	requiredDeviceExtensions = physicalDevice.requiredDeviceExtensions;
 
 	// setup logical device creation
 	createInfo = {};
@@ -214,8 +214,8 @@ VulkanDevice::VulkanDevice(VulkanApplication & vulkan, VulkanPhysicalDevice& phy
 	createInfo.ppEnabledLayerNames = vulkan.requiredLayers.data();
 	createInfo.pQueueCreateInfos = queueCreateInfos.data();
 	createInfo.queueCreateInfoCount = queueCreateInfos.size();
-	createInfo.enabledExtensionCount = requiredExtensions.size();
-	createInfo.ppEnabledExtensionNames = requiredExtensions.data();
+	createInfo.enabledExtensionCount = requiredDeviceExtensions.size();
+	createInfo.ppEnabledExtensionNames = requiredDeviceExtensions.data();
 
 	if (vkCreateDevice(physicalDevice.physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to create logical device!");

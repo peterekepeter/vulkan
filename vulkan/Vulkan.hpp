@@ -27,7 +27,7 @@ public:
 	VkPhysicalDevice physicalDevice;
 	VkPhysicalDeviceProperties properties;
 	VkPhysicalDeviceFeatures features;
-	std::vector<const char*> requiredExtensions;
+	std::vector<const char*> requiredDeviceExtensions;
 	std::vector<VkExtensionProperties> availableExtensions;
 	std::vector<VkQueueFamilyProperties> queueFamilies;
 	int score;
@@ -72,7 +72,7 @@ class VulkanDevice
 public:
 	VkDeviceQueueCreateInfo queueCreateInfo;
 	VkPhysicalDeviceFeatures deviceFeatures;
-	std::vector<const char*> requiredExtensions;
+	std::vector<const char*> requiredDeviceExtensions;
 	VkDeviceCreateInfo createInfo;
 	VkDevice device;
 	VkQueue graphicsQueue;
