@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Configuration.hpp"
+#include "../submodule/app-service-sandwich/AppServiceSandwich/CommandLineParser.hpp"
 
 Configuration* ConfigurationBuilder::Build(ApplicationServices& app)
 {
@@ -35,33 +36,19 @@ void ConfigurationBuilder::ReadConsoleConfig()
 	ApplicationServices& app = *this->app;
 	Configuration& config = *this->configuration;
 
-	config.fullscreen = argc == 2;
+	bool borderless = false;
+	bool windowed = false;
 
-	if (argc >= 2) {
-		if (strcmp(argv[1], "fullscreen") == 0)
-		{
-			config.fullscreen = true;
-		}
-		else if (strcmp(argv[1], "borderless") == 0)
-		{
-			config.fullscreen = true;
-			config.borderless = true;
-		}
-		else if (strcmp(argv[1], "windowed") == 0) 
-		{
-			config.fullscreen = false;
-			config.borderless = false;
-		}
-		else
-		{
-			app.console.Open().Output << "Command line option " << argv[1] << " \n";
-			throw std::exception("Invalid command line option.");
-		}
-	}
-	if (argc >= 4) {
-		config.xres = std::stoi(argv[2]);
-		config.yres = std::stoi(argv[3]);
-	}
+	CommandLineParser()
+		.Option("-b", "--borderless", borderless)
+		.Option("-w", "--windowed", windowed)
+		.Option("-x", "--xres", config.xres)
+		.Option("-y", "--yres", config.yres)
+		.Option("-d", "--device-index", config.device_index)
+		.Parse(argv, argc);
+
+	config.fullscreen = !windowed;
+	config.borderless = borderless;
 }
 
 // this function will skip the UTF-8 BOM header in the given stream if detected at current position
