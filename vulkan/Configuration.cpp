@@ -2,12 +2,11 @@
 #include "Configuration.hpp"
 #include "../submodule/app-service-sandwich/AppServiceSandwich/CommandLineParser.hpp"
 
-Configuration* ConfigurationBuilder::Build(ApplicationServices& app)
+Configuration* ConfigurationBuilder::Build()
 {
 	if (this->configuration != nullptr) {
 		throw std::logic_error("a ConfigurationBuilder can only build once");
 	}
-	this->app = &app;
 	this->configuration = new Configuration();
 	if (this->fileName != nullptr) {
 		ReadConfigurationFile();
@@ -33,7 +32,6 @@ ConfigurationBuilder& ConfigurationBuilder::UseConfigurationFile(const char* con
 
 void ConfigurationBuilder::ReadConsoleConfig()
 {
-	ApplicationServices& app = *this->app;
 	Configuration& config = *this->configuration;
 
 	bool borderless = false;
@@ -69,19 +67,16 @@ static void skipBomHeader(std::ifstream& file) {
 
 void ConfigurationBuilder::ReadConfigurationFile()
 {
-	ApplicationServices& app = *this->app;
 	Configuration& config = *this->configuration;
 	auto configFilePath = "config.ini";
 
 	std::ifstream infile(configFilePath);
 	if (!infile.good()) {
-		app.console.Open().Error << "Configuration file " << configFilePath << " not found!\n";
 		throw std::exception("Failed to read configuration file.");
 	}
 
 	skipBomHeader(infile);
 
-	app.console.Open().Output << "Reading configurationfile " << configFilePath << "\n";
 	std::string line;
 	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 

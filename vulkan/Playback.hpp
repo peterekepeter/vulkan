@@ -16,7 +16,7 @@ class MusicPlaybackDevice : public IPlaybackDevice
 {
 	double position;
 public:
-	MusicPlaybackDevice(Configuration* config);
+	MusicPlaybackDevice(DependencyManager* config);
 	virtual void SetPosition(double seconds) override;
 	virtual double GetPosition() override;
 	virtual bool IsPlaying() override;
@@ -49,7 +49,7 @@ class OfflinePlaybackDevice : public IPlaybackDevice
 	double position;
 	void UpdatePosition();
 public: 
-	OfflinePlaybackDevice(Configuration* config);
+	OfflinePlaybackDevice(DependencyManager*);
 	virtual void SetPosition(double seconds) override;
 	virtual double GetPosition() override;
 	virtual bool IsPlaying() override;

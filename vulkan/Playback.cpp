@@ -2,8 +2,9 @@
 #include "Playback.hpp"
 #include "Configuration.hpp"
 
-MusicPlaybackDevice::MusicPlaybackDevice(Configuration* config)
+MusicPlaybackDevice::MusicPlaybackDevice(DependencyManager* di)
 {
+	auto config = di->GetInstance<Configuration>();
 	Music::Init(config->musicFile.c_str(), config->musicStream);
 	this->position = 0.0;
 }
@@ -98,8 +99,9 @@ void OfflinePlaybackDevice::UpdatePosition()
 	this->position = frame / fps;
 }
 
-OfflinePlaybackDevice::OfflinePlaybackDevice(Configuration* config)
+OfflinePlaybackDevice::OfflinePlaybackDevice(DependencyManager* di)
 {
+	auto config = di->GetInstance<Configuration>();
 	this->isPlaying = false;
 	this->fps = config->fps;
 	this->frame = 0;

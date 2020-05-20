@@ -26,11 +26,10 @@ class ConfigurationBuilder
 	char** argv = nullptr;
 	const char* fileName = nullptr;
 	Configuration* configuration = nullptr;
-	ApplicationServices* app = nullptr;
 public:
 	ConfigurationBuilder& UseConsoleArgs(int argc, char** argv);
 	ConfigurationBuilder& UseConfigurationFile(const char* configFile);
-	Configuration* Build(ApplicationServices& app);
+	Configuration* Build();
 private:
 	void ReadConfigurationFile();
 	void ReadConsoleConfig();
