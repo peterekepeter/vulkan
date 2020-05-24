@@ -171,6 +171,7 @@
     <ClInclude Include="Vulkan.hpp" />
     <ClInclude Include="VulkanApplicationBuilder.h" />
     <ClInclude Include="VulkanDebugUtilsMessenger.h" />
+    <ClInclude Include="VulkanShader.h" />
     <ClInclude Include="Window.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -187,6 +188,7 @@
     <ClCompile Include="Vulkan.cpp" />
     <ClCompile Include="VulkanApplicationBuilder.cpp" />
     <ClCompile Include="VulkanDebugUtilsMessenger.cpp" />
+    <ClCompile Include="VulkanShader.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>

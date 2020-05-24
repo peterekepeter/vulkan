@@ -226,6 +226,16 @@ VulkanDevice::VulkanDevice(VulkanApplication & vulkan, VulkanPhysicalDevice& phy
 	vkGetDeviceQueue(device, physicalDevice.presentFamilyIndex, 0, &presentQueue);
 }
 
+VulkanShader VulkanDevice::CreateShader(const std::vector<char> binary)
+{
+	return VulkanShader(device, binary);
+}
+
+VulkanShader VulkanDevice::CreateShader(const char* binary, const size_t size)
+{
+	return VulkanShader(device, binary, size);
+}
+
 VulkanDevice::~VulkanDevice() {
 	vkDestroyDevice(device, nullptr);
 }
