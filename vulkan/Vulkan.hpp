@@ -1,6 +1,5 @@
 #pragma once
 #include "VulkanDebugUtilsMessenger.h"
-#include "VulkanShader.h"
 
 class VulkanApplication
 {
@@ -65,38 +64,4 @@ public:
 	bool anyDevice = false;
 
 	VulkanPhysicalDeviceEnumeration(VkInstance instance, VkSurfaceKHR surface);
-};
-
-
-class VulkanDevice
-{
-public:
-	VkDeviceQueueCreateInfo queueCreateInfo;
-	VkPhysicalDeviceFeatures deviceFeatures;
-	std::vector<const char*> requiredDeviceExtensions;
-	VkDeviceCreateInfo createInfo;
-	VkDevice device;
-	VkQueue graphicsQueue;
-	VkQueue computeQueue;
-	VkQueue presentQueue;
-
-	VulkanDevice(VulkanApplication& vulkan, VulkanPhysicalDevice& physicalDevice);
-	VulkanShader CreateShader(const std::vector<char> binary);
-	VulkanShader CreateShader(const char* binary, const size_t size);
-
-	~VulkanDevice();
-};
-
-class VulkanSwapChain {
-public:
-	VkSwapchainKHR swapChain;
-	VkSurfaceFormatKHR surfaceFormat;
-	VkPresentModeKHR presentMode;
-	VkExtent2D extent;
-	VkDevice logicalDevice;
-	std::vector<VkImage> swapChainImages;
-	std::vector<VkImageView> swapChainImageViews;
-
-	VulkanSwapChain(const VulkanPhysicalDevice& physicalDevice, const VulkanDevice& device, int defaultWidth, int defaultHeight);
-	~VulkanSwapChain();
 };
