@@ -1,5 +1,5 @@
 #pragma once
-#include "./VulkanShader.h"
+#include "./VulkanShaderModule.h"
 #include "./Vulkan.hpp"
 
 class VulkanDevice
@@ -15,8 +15,8 @@ public:
 	VkQueue presentQueue;
 
 	VulkanDevice(VulkanApplication& vulkan, VulkanPhysicalDevice& physicalDevice);
-	VulkanShader CreateShader(const std::vector<char> binary);
-	VulkanShader CreateShader(const char* binary, const size_t size);
+	VulkanShaderModule CreateShaderModule(const std::vector<char> binary);
+	VulkanShaderModule CreateShaderModule(const char* binary, const size_t size);
 
 	~VulkanDevice();
 };

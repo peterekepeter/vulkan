@@ -47,14 +47,14 @@ VulkanDevice::VulkanDevice(VulkanApplication& vulkan, VulkanPhysicalDevice& phys
 	vkGetDeviceQueue(device, physicalDevice.presentFamilyIndex, 0, &presentQueue);
 }
 
-VulkanShader VulkanDevice::CreateShader(const std::vector<char> binary)
+VulkanShaderModule VulkanDevice::CreateShaderModule(const std::vector<char> binary)
 {
-	return VulkanShader(device, binary);
+	return VulkanShaderModule(device, binary);
 }
 
-VulkanShader VulkanDevice::CreateShader(const char* binary, const size_t size)
+VulkanShaderModule VulkanDevice::CreateShaderModule(const char* binary, const size_t size)
 {
-	return VulkanShader(device, binary, size);
+	return VulkanShaderModule(device, binary, size);
 }
 
 VulkanDevice::~VulkanDevice() {
