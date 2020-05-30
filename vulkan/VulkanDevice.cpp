@@ -57,6 +57,11 @@ VulkanShaderModule VulkanDevice::CreateShaderModule(const char* binary, const si
 	return VulkanShaderModule(device, binary, size);
 }
 
+VulkanGraphicsPipelineBuilder VulkanDevice::CreateGraphicsPipeline()
+{
+	return VulkanGraphicsPipelineBuilder(device);
+}
+
 VulkanDevice::~VulkanDevice() {
 	vkDestroyDevice(device, nullptr);
 }

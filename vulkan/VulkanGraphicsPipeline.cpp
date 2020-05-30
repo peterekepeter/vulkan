@@ -3,7 +3,7 @@
 
 VulkanGraphicsPipeline::VulkanGraphicsPipeline(
 	VkDevice device, 
-	VkGraphicsPipelineCreateInfo info)
+	const VkGraphicsPipelineCreateInfo& info)
 	: vkDevice(device)
 	, vkPipeline(VK_NULL_HANDLE)
 {
@@ -13,7 +13,7 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(
 VulkanGraphicsPipeline::VulkanGraphicsPipeline(
 	VkDevice device, 
 	VkPipelineCache cache, 
-	VkGraphicsPipelineCreateInfo info)
+	const VkGraphicsPipelineCreateInfo& info)
 	: vkDevice(device)
 	, vkPipeline(VK_NULL_HANDLE)
 {
@@ -39,7 +39,7 @@ VulkanGraphicsPipeline::~VulkanGraphicsPipeline()
 
 void VulkanGraphicsPipeline::Init(
 	VkPipelineCache cache,
-	VkGraphicsPipelineCreateInfo info)
+	const VkGraphicsPipelineCreateInfo& info)
 {
 	auto result = vkCreateGraphicsPipelines(
 		vkDevice, 

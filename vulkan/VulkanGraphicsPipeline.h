@@ -6,8 +6,8 @@ public:
 	VkPipeline vkPipeline;
 	VkDevice vkDevice;
 
-	VulkanGraphicsPipeline(VkDevice, VkGraphicsPipelineCreateInfo);
-	VulkanGraphicsPipeline(VkDevice, VkPipelineCache, VkGraphicsPipelineCreateInfo);
+	VulkanGraphicsPipeline(VkDevice, const VkGraphicsPipelineCreateInfo&);
+	VulkanGraphicsPipeline(VkDevice, VkPipelineCache, const VkGraphicsPipelineCreateInfo&);
 
 	// no copy
 	VulkanGraphicsPipeline(const VulkanGraphicsPipeline&) = delete;
@@ -20,7 +20,7 @@ public:
 	~VulkanGraphicsPipeline();
 
 private:
-	void Init(VkPipelineCache, VkGraphicsPipelineCreateInfo);
+	void Init(VkPipelineCache, const VkGraphicsPipelineCreateInfo&);
 	void Steal(VulkanGraphicsPipeline& other);
 	void Free();
 };

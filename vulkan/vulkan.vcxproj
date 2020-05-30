@@ -173,6 +173,7 @@
     <ClInclude Include="VulkanDebugUtilsMessenger.h" />
     <ClInclude Include="VulkanDevice.h" />
     <ClInclude Include="VulkanGraphicsPipeline.h" />
+    <ClInclude Include="VulkanGraphicsPipelineBuilder.h" />
     <ClInclude Include="VulkanShaderModule.h" />
     <ClInclude Include="VulkanSwapChain.h" />
     <ClInclude Include="Window.hpp" />
@@ -193,6 +194,7 @@
     <ClCompile Include="VulkanDebugUtilsMessenger.cpp" />
     <ClCompile Include="VulkanDevice.cpp" />
     <ClCompile Include="VulkanGraphicsPipeline.cpp" />
+    <ClCompile Include="VulkanGraphicsPipelineBuilder.cpp" />
     <ClCompile Include="VulkanShader.cpp" />
     <ClCompile Include="VulkanSwapChain.cpp" />
     <ClCompile Include="Window.cpp" />

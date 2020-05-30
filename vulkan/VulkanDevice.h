@@ -1,6 +1,7 @@
 #pragma once
 #include "./VulkanShaderModule.h"
 #include "./Vulkan.hpp"
+#include "./VulkanGraphicsPipelineBuilder.h"
 
 class VulkanDevice
 {
@@ -17,6 +18,7 @@ public:
 	VulkanDevice(VulkanApplication& vulkan, VulkanPhysicalDevice& physicalDevice);
 	VulkanShaderModule CreateShaderModule(const std::vector<char> binary);
 	VulkanShaderModule CreateShaderModule(const char* binary, const size_t size);
+	VulkanGraphicsPipelineBuilder CreateGraphicsPipeline();
 
 	~VulkanDevice();
 };
