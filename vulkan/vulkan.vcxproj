@@ -194,7 +194,6 @@
     <ClCompile Include="VulkanDebugUtilsMessenger.cpp" />
     <ClCompile Include="VulkanDevice.cpp" />
     <ClCompile Include="VulkanGraphicsPipeline.cpp" />
-    <ClCompile Include="VulkanGraphicsPipelineBuilder.cpp" />
     <ClCompile Include="VulkanShader.cpp" />
     <ClCompile Include="VulkanSwapChain.cpp" />
     <ClCompile Include="Window.cpp" />

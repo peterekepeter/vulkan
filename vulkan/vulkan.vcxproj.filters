@@ -104,9 +104,6 @@
     <ClCompile Include="VulkanGraphicsPipeline.cpp">
       <Filter>Source Files\Vulkan</Filter>
     </ClCompile>
-    <ClCompile Include="VulkanGraphicsPipelineBuilder.cpp">
-      <Filter>Source Files\Vulkan</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="windows.manifest">
