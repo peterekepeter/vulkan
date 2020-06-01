@@ -15,6 +15,23 @@ public:
 	VulkanGraphicsPipelineBuilder& AddShaderStage(
 		const VkPipelineShaderStageCreateInfo& stage);
 
+	VulkanGraphicsPipelineBuilder& AddShaderStage(
+		VkShaderStageFlagBits vlStageFlagBits,
+		VkShaderModule vkShaderModule,
+		const char* entryPointName = nullptr, // defaults to "main"
+		VkSpecializationInfo* vkPSpecializationInfo = nullptr
+	);
+
+	VulkanGraphicsPipelineBuilder& AddVertexShaderStage(
+		const VulkanShaderModule& shaderModule,
+		const char* entryPointName = nullptr // defaults to "main"
+	);
+
+	VulkanGraphicsPipelineBuilder& AddFragmentShaderStage(
+		const VulkanShaderModule& shaderModule,
+		const char* entryPointName = nullptr // defaults to "main"
+	);
+
 	VulkanGraphicsPipelineBuilder& SetVertexInputState(
 		const VkPipelineVertexInputStateCreateInfo& state);
 
@@ -114,10 +131,44 @@ inline VulkanGraphicsPipelineBuilder::operator VulkanGraphicsPipeline()
 	return Build();
 }
 
-inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::AddShaderStage(const VkPipelineShaderStageCreateInfo& stage)
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::AddShaderStage(
+	const VkPipelineShaderStageCreateInfo& stage)
 {
 	shaderStages.push_back(stage); // will perform copy
 	return *this;
+}
+
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::AddShaderStage(
+	VkShaderStageFlagBits vkStageFlagBits, 
+	VkShaderModule vkShaderModule, 
+	const char* entryPointName, 
+	VkSpecializationInfo* vkPSpecializationInfo)
+{
+	shaderStages.emplace_back();
+	auto& stage = shaderStages[shaderStages.size() - 1];
+	stage = {};
+	stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	stage.stage = vkStageFlagBits;
+	stage.module = vkShaderModule;
+	stage.pName = entryPointName != nullptr ? entryPointName : "main";
+	stage.pSpecializationInfo = nullptr;
+	return *this;
+}
+
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::AddVertexShaderStage(const VulkanShaderModule& shaderModule, const char* entryPointName)
+{
+	return AddShaderStage(
+		VK_SHADER_STAGE_VERTEX_BIT,
+		shaderModule.shaderModule,
+		entryPointName);
+}
+
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::AddFragmentShaderStage(const VulkanShaderModule& shaderModule, const char* entryPointName)
+{
+	return AddShaderStage(
+		VK_SHADER_STAGE_FRAGMENT_BIT,
+		shaderModule.shaderModule,
+		entryPointName);
 }
 
 inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::SetVertexInputState(const VkPipelineVertexInputStateCreateInfo& state)
