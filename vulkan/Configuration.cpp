@@ -14,7 +14,16 @@ Configuration* ConfigurationBuilder::Build()
 	if (this->argc != 0) {
 		ReadConsoleConfig();
 	}
+	if (this->env != nullptr){
+		ReadEnv();
+	}
 	return this->configuration;
+}
+
+ConfigurationBuilder& ConfigurationBuilder::UseEnvironment(char** env)
+{
+	this->env = env;
+	return *this;
 }
 
 ConfigurationBuilder& ConfigurationBuilder::UseConsoleArgs(int argc, char** argv)
@@ -47,6 +56,31 @@ void ConfigurationBuilder::ReadConsoleConfig()
 
 	config.fullscreen = !windowed;
 	config.borderless = borderless;
+}
+
+static bool try_parse(char* target, const char* key, char** outp) {
+	int i;
+	for (i=0; key[i] != 0 && target[i] != 0; i++){
+		if (key[i] != target[i]) {
+			return false;
+		}
+	}
+	if (key[i] == 0 && target[i] == '=') {
+		*outp = target + i + 1;
+		return true;
+	}
+	return false;
+}
+
+void ConfigurationBuilder::ReadEnv()
+{
+	for (char** ptr = this->env; *ptr != nullptr; ptr++) {
+		char* data_ptr = nullptr;
+		if (try_parse(*ptr, "VULKAN_SDK", &data_ptr)) {
+			this->configuration->vulkan_sdk = std::make_unique<std::string>(data_ptr);
+		}
+	}
+
 }
 
 // this function will skip the UTF-8 BOM header in the given stream if detected at current position
