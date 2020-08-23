@@ -32,6 +32,8 @@ public:
 		const char* entryPointName = nullptr // defaults to "main"
 	);
 
+	VulkanGraphicsPipelineBuilder& AddDynamicState(VkDynamicState dynamicState);
+
 	VulkanGraphicsPipelineBuilder& SetVertexInputState(
 		const VkPipelineVertexInputStateCreateInfo& state);
 
@@ -81,6 +83,10 @@ private:
 	VkPipelineMultisampleStateCreateInfo multisampleState;
 	VkPipelineColorBlendStateCreateInfo colorBlendState;
 
+	static const auto MAX_DYNAMIC_STATE = 8;
+	VkDynamicState dynamicState[MAX_DYNAMIC_STATE];
+	int dynamicStateCount = 0;
+
 	// renderpass
 	VkPipelineLayout vkPipelineLayout;
 	VkRenderPass vkRenderPass;
@@ -116,6 +122,14 @@ inline VulkanGraphicsPipeline VulkanGraphicsPipelineBuilder::Build()
 	info.pDepthStencilState = nullptr; // Optional
 	info.pColorBlendState = &colorBlendState;
 	info.pDynamicState = nullptr; // Optional
+
+	if (dynamicStateCount > 0) {
+		VkPipelineDynamicStateCreateInfo create_info = {};
+		create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		create_info.dynamicStateCount = dynamicStateCount;
+		create_info.pDynamicStates = dynamicState;
+		info.pDynamicState = &create_info;
+	}
 
 	info.layout = vkPipelineLayout;
 	info.renderPass = vkRenderPass;
@@ -169,6 +183,15 @@ inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::AddFragment
 		VK_SHADER_STAGE_FRAGMENT_BIT,
 		shaderModule.shaderModule,
 		entryPointName);
+}
+
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::AddDynamicState(VkDynamicState dynamicState)
+{
+	if (dynamicStateCount >= MAX_DYNAMIC_STATE) {
+		throw std::runtime_error("exceeded maximum dynamic states supported by builder");
+	}
+	this->dynamicState[this->dynamicStateCount++] = dynamicState;
+	return *this;
 }
 
 inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::SetVertexInputState(const VkPipelineVertexInputStateCreateInfo& state)
