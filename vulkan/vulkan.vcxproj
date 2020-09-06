@@ -170,6 +170,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="VulkanImage.h" />
     <ClInclude Include="VulkanImageMemoryAllocator.h" />
+    <ClInclude Include="VulkanImageView.h" />
     <ClInclude Include="VulkanMemory.h" />
     <ClInclude Include="Vulkan.hpp" />
     <ClInclude Include="VulkanApplicationBuilder.h" />

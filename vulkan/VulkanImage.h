@@ -1,8 +1,5 @@
 #pragma once
 
-
-
-
 class VulkanImage
 {
 public:
@@ -10,9 +7,15 @@ public:
 	VkImage vkImageHandle;
 	VulkanMemory memory;
 
+	// nice to have so we can create compatible view from
+	VkImageType vkImageType;
+	VkFormat vkFormat;
+
 	VulkanImage() : vkDeviceHandle(VK_NULL_HANDLE), vkImageHandle(VK_NULL_HANDLE) { }
 
 	VulkanImage(VkDevice device, const VkImageCreateInfo& createInfo) : vkDeviceHandle(device) {
+		vkImageType = createInfo.imageType;
+		vkFormat = createInfo.format;
 		switch (vkCreateImage(vkDeviceHandle, &createInfo, nullptr, &vkImageHandle)) {
 		case VK_SUCCESS:
 			break;
@@ -35,6 +38,8 @@ public:
 	VulkanImage(VulkanImage&& other) noexcept {
 		vkDeviceHandle = other.vkDeviceHandle;
 		vkImageHandle = other.vkImageHandle;
+		vkFormat = other.vkFormat;
+		vkImageType = other.vkImageType;
 		memory = std::move(other.memory);
 		other.vkImageHandle = VK_NULL_HANDLE;
 	}
@@ -54,9 +59,12 @@ public:
 			switch (memoryTypeHostVisible) {
 			case true:
 				image.memory = imageMemoryAllocator.AllocateHostVisibleAndCoherent(image.vkImageHandle);
+				break;
 			case false:
 				image.memory = imageMemoryAllocator.AllocateDeviceLocal(image.vkImageHandle);
+				break;
 			}
+			imageMemoryAllocator.BindImageMemory(image.vkImageHandle, image.memory);
 			return image;
 		}
 
@@ -83,6 +91,25 @@ public:
 				.SetSharingMode(VK_SHARING_MODE_EXCLUSIVE)
 				.ClearQueueFamilyIndices();
 		}
+
+		// commonly used and supported RGBA formats
+
+		Builder& FormatR8G8B8A8_UNORM() { return SetFormat(VK_FORMAT_R8G8B8A8_UNORM); }
+		Builder& FormatR8G8B8A8_SRGB() { return SetFormat(VK_FORMAT_R8G8B8A8_SRGB); }
+		Builder& FormatR16G16B16A16_SFLOAT() { return SetFormat(VK_FORMAT_R16G16B16A16_SFLOAT); }
+		Builder& FormatR32G32B32A32_SFLOAT() { return SetFormat(VK_FORMAT_R32G32B32A32_SFLOAT); }
+
+		// commonly used and supported 2 component formats
+
+		Builder& FormatR8G8_UNORM() { return SetFormat(VK_FORMAT_R8G8_UNORM); }
+		Builder& FormatR16G16_SFLOAT() { return SetFormat(VK_FORMAT_R16G16_SFLOAT); }
+		Builder& FormatR32G32_SFLOAT() { return SetFormat(VK_FORMAT_R32G32_SFLOAT); }
+
+		// commonly used and supported 1 component formats
+
+		Builder& FormatR8_UNORM() { return SetFormat(VK_FORMAT_R8_UNORM); }
+		Builder& FormatR16_SFLOAT() { return SetFormat(VK_FORMAT_R16_SFLOAT); }
+		Builder& FormatR32_SFLOAT() { return SetFormat(VK_FORMAT_R32_SFLOAT); }
 
 		// shortcuts
 

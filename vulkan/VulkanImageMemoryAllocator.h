@@ -29,7 +29,7 @@ public:
 		return allocator.Allocate(requirements, requiredProperties);
 	}
 
-	void BindImageMemory(VkImage image, VulkanMemory memory)
+	void BindImageMemory(VkImage image, VulkanMemory& memory)
 	{
 		vkBindImageMemory(memory.vkDeviceHandle, image, memory.vkMemoryHandle, VkDeviceSize(0));
 	}
