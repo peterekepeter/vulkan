@@ -1,4 +1,5 @@
 #pragma once
+#include "CommonImageFormats.h"
 
 class VulkanImage
 {
@@ -7,15 +8,17 @@ public:
 	VkImage vkImageHandle;
 	VulkanMemory memory;
 
-	// nice to have so we can create compatible view from
+	// nice to have so we can create other compatible objects
 	VkImageType vkImageType;
 	VkFormat vkFormat;
+	VkSampleCountFlagBits vkSampleCountFlagBits;
 
 	VulkanImage() : vkDeviceHandle(VK_NULL_HANDLE), vkImageHandle(VK_NULL_HANDLE) { }
 
 	VulkanImage(VkDevice device, const VkImageCreateInfo& createInfo) : vkDeviceHandle(device) {
 		vkImageType = createInfo.imageType;
 		vkFormat = createInfo.format;
+		vkSampleCountFlagBits = createInfo.samples;
 		switch (vkCreateImage(vkDeviceHandle, &createInfo, nullptr, &vkImageHandle)) {
 		case VK_SUCCESS:
 			break;
@@ -39,6 +42,7 @@ public:
 		vkDeviceHandle = other.vkDeviceHandle;
 		vkImageHandle = other.vkImageHandle;
 		vkFormat = other.vkFormat;
+		vkSampleCountFlagBits = other.vkSampleCountFlagBits;
 		vkImageType = other.vkImageType;
 		memory = std::move(other.memory);
 		other.vkImageHandle = VK_NULL_HANDLE;
@@ -94,25 +98,29 @@ public:
 
 		// commonly used and supported RGBA formats
 
-		Builder& FormatR8G8B8A8_UNORM() { return SetFormat(VK_FORMAT_R8G8B8A8_UNORM); }
-		Builder& FormatR8G8B8A8_SRGB() { return SetFormat(VK_FORMAT_R8G8B8A8_SRGB); }
-		Builder& FormatR16G16B16A16_SFLOAT() { return SetFormat(VK_FORMAT_R16G16B16A16_SFLOAT); }
-		Builder& FormatR32G32B32A32_SFLOAT() { return SetFormat(VK_FORMAT_R32G32B32A32_SFLOAT); }
+		Builder& FormatR8G8B8A8_UNORM() { return SetFormat(CommonImageFormats::R8G8B8A8_UNORM); }
+		Builder& FormatR8G8B8A8_SRGB() { return SetFormat(CommonImageFormats::R8G8B8A8_SRGB); }
+		Builder& FormatR16G16B16A16_SFLOAT() { return SetFormat(CommonImageFormats::R16G16B16A16_SFLOAT); }
+		Builder& FormatR32G32B32A32_SFLOAT() { return SetFormat(CommonImageFormats::R32G32B32A32_SFLOAT); }
 
 		// commonly used and supported 2 component formats
 
-		Builder& FormatR8G8_UNORM() { return SetFormat(VK_FORMAT_R8G8_UNORM); }
-		Builder& FormatR16G16_SFLOAT() { return SetFormat(VK_FORMAT_R16G16_SFLOAT); }
-		Builder& FormatR32G32_SFLOAT() { return SetFormat(VK_FORMAT_R32G32_SFLOAT); }
+		Builder& FormatR8G8_UNORM() { return SetFormat(CommonImageFormats::R8G8_UNORM); }
+		Builder& FormatR16G16_SFLOAT() { return SetFormat(CommonImageFormats::R16G16_SFLOAT); }
+		Builder& FormatR32G32_SFLOAT() { return SetFormat(CommonImageFormats::R32G32_SFLOAT); }
 
 		// commonly used and supported 1 component formats
 
-		Builder& FormatR8_UNORM() { return SetFormat(VK_FORMAT_R8_UNORM); }
-		Builder& FormatR16_SFLOAT() { return SetFormat(VK_FORMAT_R16_SFLOAT); }
-		Builder& FormatR32_SFLOAT() { return SetFormat(VK_FORMAT_R32_SFLOAT); }
+		Builder& FormatR8_UNORM() { return SetFormat(CommonImageFormats::R8_UNORM); }
+		Builder& FormatR16_SFLOAT() { return SetFormat(CommonImageFormats::R16_SFLOAT); }
+		Builder& FormatR32_SFLOAT() { return SetFormat(CommonImageFormats::R32_SFLOAT); }
 
 		// shortcuts
 
+		Builder& Image1D(uint32_t width) { return SetImageType(VK_IMAGE_TYPE_1D).SetExtent(width); }
+		Builder& Image2D(uint32_t width, uint32_t height) { return SetImageType(VK_IMAGE_TYPE_2D).SetExtent(width, height); }
+		Builder& Image3D(uint32_t width, uint32_t height, uint32_t depth) { return SetImageType(VK_IMAGE_TYPE_3D).SetExtent(width, height, depth); }
+		Builder& ImageCube(uint32_t widthAndHeight) { return Image2D(widthAndHeight, widthAndHeight).SetArrayLayers(6).SetFlagBits(VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT); }
 		Builder& HostVisibleAndCoherent() { return SetTiling(VK_IMAGE_TILING_LINEAR).SetMemoryType(true); }
 		Builder& OptimalTiling() { return SetTiling(VK_IMAGE_TILING_OPTIMAL); }
 		Builder& LinearTiling() { return SetTiling(VK_IMAGE_TILING_LINEAR); }
