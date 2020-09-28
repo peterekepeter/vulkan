@@ -19,6 +19,8 @@ public:
 
 	~VulkanDebugUtilsMessenger();
 
+	static bool IsSupportedByInstance(VkInstance instance);
+
 private:
 	std::function<void(
 		VkDebugUtilsMessageSeverityFlagBitsEXT,

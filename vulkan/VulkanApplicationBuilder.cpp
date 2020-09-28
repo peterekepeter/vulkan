@@ -1,7 +1,10 @@
 #include "stdafx.h"
 #include "VulkanApplicationBuilder.h"
 
-VulkanApplicationBuilder::VulkanApplicationBuilder()
+using names = std::vector<const char*>;
+using str = std::string;
+
+VulkanApplicationBuilder::VulkanApplicationBuilder(Console& c) : console(c)
 {
 	memset(&info, 0, sizeof(VkApplicationInfo));
 	info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -14,56 +17,101 @@ VulkanApplicationBuilder::VulkanApplicationBuilder()
 	logger = nullptr;
 }
 
+struct VulkanExtensionEnumeration
+{
+	VulkanExtensionEnumeration() {
+		uint32_t extensionCount = 0;
+		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+		extensions.resize(extensionCount);
+		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+	}
+
+	names ResolveExtensions(const names& required, const names& preferred, Console& console) {
+		names result;
+		for (auto& name : required) {
+			if (!HasExtension(name)) {
+				throw std::runtime_error(str("Required extension ") + name + " not found!");
+			}
+			else {
+				result.push_back(name);
+			}
+		}
+		for (auto& name : preferred) {
+			if (!HasExtension(name)) {
+				console.Open().Error << str("Optional extension ") + name + "not found...\n";
+			} else {
+				result.push_back(name);
+			}
+		}
+		return result;
+	}
+
+private:
+
+	std::vector<VkExtensionProperties> extensions;
+
+	bool HasExtension(const char* required) {
+		// check required extensions
+		for (auto& props : extensions) {
+			if (std::strcmp(required, props.extensionName) == 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+};
+
+struct VulkanLayerEnumeration
+{
+
+	VulkanLayerEnumeration() {
+		// enumerate vk layers
+		uint32_t layerCount;
+		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+		layers.resize(layerCount);
+		vkEnumerateInstanceLayerProperties(&layerCount, layers.data());
+	}
+
+	names ResolveLayers(const names& required, const names& preferred, Console& console) {
+		names result;
+		for (auto& name : required) {
+			if (!HasLayer(name)) {
+				throw std::runtime_error(str("Required layer ") + name + " not found!");
+			}
+			else {
+				result.push_back(name);
+			}
+		}
+		for (auto& name : preferred) {
+			if (!HasLayer(name)) {
+				console.Open().Error << str("Optional layer ") + name + " not found...\n";
+			}
+			else {
+				result.push_back(name);
+			}
+		}
+		return result;
+	}
+
+private:
+
+	std::vector<VkLayerProperties> layers;
+
+	bool HasLayer(const char* required) {
+		// check required extensions
+		for (auto& props : layers) {
+			if (std::strcmp(required, props.layerName) == 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+};
+
 VulkanApplication VulkanApplicationBuilder::Build()
 {
-	std::vector<VkExtensionProperties> availableExtensions;
-	std::vector<VkLayerProperties> availableLayers;
-
-	// enumerate vk extensions
-	uint32_t extensionCount = 0;
-	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-	availableExtensions.resize(extensionCount);
-	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, availableExtensions.data());
-
-	// enumerate vk layers
-	uint32_t layerCount;
-	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-	availableLayers.resize(layerCount);
-	vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-
-	// add debug utils if loggers was added
-	if (this->logger != nullptr) {
-		requiredDeviceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-	}
-
-	// check required layers
-	for (auto& required : requiredLayers) {
-		bool found = false;
-		for (auto& avaiable : availableLayers)
-		{
-			if (std::strcmp(required, avaiable.layerName) == 0)
-			{
-				found = true;
-			}
-		}
-		if (found == false)
-		{
-			throw std::runtime_error(std::string("Required layer ") + required + " not found!");
-		}
-	}
-
-	// check required extensions
-	for (auto& required : requiredDeviceExtensions) {
-		bool found = false;
-		for (auto& avaiable : availableExtensions) {
-			if (std::strcmp(required, avaiable.extensionName) == 0) {
-				found = true;
-			}
-		}
-		if (found == false) {
-			throw std::runtime_error(std::string("Required extension ") + required + " not found!");
-		}
-	}
+	auto extensions = VulkanExtensionEnumeration().ResolveExtensions(requiredDeviceExtensions, preferredDeviceExtensions, console);
+	auto layers = VulkanLayerEnumeration().ResolveLayers(requiredLayers, preferredLayers, console);
 
 	VkInstanceCreateInfo createInfo;
 
@@ -82,9 +130,13 @@ VulkanApplication VulkanApplicationBuilder::Build()
 
 	if (logger != nullptr)
 	{
-		result.debugMessenger = std::make_unique<VulkanDebugUtilsMessenger>(
-			result.instance,
-			std::move(logger));
+		if (VulkanDebugUtilsMessenger::IsSupportedByInstance(result.instance)) {
+			result.debugMessenger = std::make_unique<VulkanDebugUtilsMessenger>(
+				result.instance,
+				std::move(logger));
+		} else {
+			console.Open().Error << "Vulkan Debugging Utilities are not supported, debug information not available! (SDK not properly installed)\n";
+		}
 	}
 	return result;
 }
@@ -117,7 +169,7 @@ VulkanApplicationBuilder::EnableValidationLayer(
 	if (!enabled) {
 		return *this;
 	}
-	requiredLayers.push_back("VK_LAYER_LUNARG_standard_validation");
+	preferredLayers.push_back("VK_LAYER_LUNARG_standard_validation");
 	return *this;
 }
 
@@ -128,6 +180,10 @@ VulkanApplicationBuilder& VulkanApplicationBuilder::UseLogger(
 		const VkDebugUtilsMessengerCallbackDataEXT*)> logger)
 {
 	this->logger = logger;
+	// add debug utils if loggers was added
+	if (this->logger != nullptr) {
+		preferredDeviceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	}
 	return *this;
 }
 

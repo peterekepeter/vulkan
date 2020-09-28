@@ -453,7 +453,7 @@ void runApplication(ApplicationServices& app) {
 
 	AppVulkanLogger logger{app};
 
-	VulkanApplication vulkan = VulkanApplicationBuilder()
+	VulkanApplication vulkan = VulkanApplicationBuilder(app.console)
 		.ApiVersion(VK_API_VERSION_1_0)
 		.ApplicationInfo("N/A", VK_MAKE_VERSION(1, 0, 0))
 		.EngineInfo("N/A", VK_MAKE_VERSION(1, 0, 0))

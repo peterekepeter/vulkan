@@ -32,7 +32,7 @@ VulkanDebugUtilsMessenger::VulkanDebugUtilsMessenger(
 		| VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT 
 		| VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 	createInfo.pfnUserCallback = debugCallback;
-	createInfo.pUserData = this; // Optional
+	createInfo.pUserData = this;
 
 	messenger = {};
 	auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
@@ -47,4 +47,9 @@ VulkanDebugUtilsMessenger::~VulkanDebugUtilsMessenger() {
 	if (func != nullptr) {
 		func(instance, messenger, nullptr);
 	}
+}
+
+bool VulkanDebugUtilsMessenger::IsSupportedByInstance(VkInstance instance)
+{
+	return vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT") != nullptr;
 }
