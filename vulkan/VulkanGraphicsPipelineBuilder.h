@@ -68,7 +68,6 @@ public:
 	VulkanGraphicsPipelineBuilder& SetViewportDepth(float min, float max) { return SetViewportMinDepth(min).SetViewportMaxDepth(max); }
 	VulkanGraphicsPipelineBuilder& SetViewportPosition(float x, float y) { return SetViewportX(x).SetViewportY(y); }
 	VulkanGraphicsPipelineBuilder& SetViewportSize(float width, float height) { return SetViewportWidth(width).SetViewportHeight(height); }
-	VulkanGraphicsPipelineBuilder& SetViewportHeight(float height) { viewport.height = height; return *this; }
 
 	VulkanGraphicsPipelineBuilder& SetScissorWidth(uint32_t width) { scissor.extent.width = width; return *this; }
 	VulkanGraphicsPipelineBuilder& SetScissorHeight(uint32_t height) { scissor.extent.height = height; return *this; }
@@ -135,7 +134,6 @@ private:
 	VkPipelineRasterizationStateCreateInfo rasterizerState;
 	VkPipelineMultisampleStateCreateInfo multisampleState;
 	VkPipelineColorBlendStateCreateInfo colorBlendState;
-	VkPipelineViewportStateCreateInfo viewportState;
 
 	VkViewport viewport;
 	VkRect2D scissor;

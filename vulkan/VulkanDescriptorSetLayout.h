@@ -42,6 +42,7 @@ public:
 			DescriptorBuilder& with_shader_stage_flags(VkShaderStageFlags stageFlags) { m_descriptor.stageFlags = stageFlags; return *this; }
 			DescriptorBuilder& with_immutable_samplers(VkSampler* pImmutableSamplers) { m_descriptor.pImmutableSamplers = pImmutableSamplers; return *this; }
 			DescriptorBuilder& with_vertex_stage_access() { m_descriptor.stageFlags |= VK_SHADER_STAGE_VERTEX_BIT; return *this; }
+			DescriptorBuilder& with_vertex_fragment_stage_access() { m_descriptor.stageFlags |= VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT; return *this; }
 			DescriptorBuilder& with_tesselation_control_stage_access() { m_descriptor.stageFlags |= VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT; return *this; }
 			DescriptorBuilder& with_tesselation_evaluation_stage_access() { m_descriptor.stageFlags |= VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT; return *this; }
 			DescriptorBuilder& with_geometry_stage_access() { m_descriptor.stageFlags |= VK_SHADER_STAGE_GEOMETRY_BIT; return *this; }

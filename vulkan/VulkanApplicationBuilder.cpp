@@ -108,25 +108,27 @@ private:
 	}
 };
 
-VulkanApplication VulkanApplicationBuilder::Build()
-{
-	auto extensions = VulkanExtensionEnumeration().ResolveExtensions(requiredDeviceExtensions, preferredDeviceExtensions, console);
-	auto layers = VulkanLayerEnumeration().ResolveLayers(requiredLayers, preferredLayers, console);
-
+VkInstanceCreateInfo prepare_create_info(VkApplicationInfo &info, names& enabled_extensions, names& enabled_layers) {
 	VkInstanceCreateInfo createInfo;
-
 	// configure vk create info
 	memset(&createInfo, 0, sizeof(VkInstanceCreateInfo));
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &info;
-	createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredDeviceExtensions.size());
-	createInfo.ppEnabledExtensionNames = requiredDeviceExtensions.data();
-	createInfo.enabledLayerCount = static_cast<uint32_t>(requiredLayers.size());
-	createInfo.ppEnabledLayerNames = requiredLayers.data();
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(enabled_extensions.size());
+	createInfo.ppEnabledExtensionNames = enabled_extensions.data();
+	createInfo.enabledLayerCount = static_cast<uint32_t>(enabled_layers.size());
+	createInfo.ppEnabledLayerNames = enabled_layers.data();
+	return createInfo;
+}
+
+VulkanApplication VulkanApplicationBuilder::Build()
+{
+	auto enabled_extensions = VulkanExtensionEnumeration().ResolveExtensions(requiredDeviceExtensions, preferredDeviceExtensions, console);
+	auto enabled_layers = VulkanLayerEnumeration().ResolveLayers(requiredLayers, preferredLayers, console);
 
 	auto result = VulkanApplication(
-		createInfo, 
-		requiredLayers);
+		prepare_create_info(info, enabled_extensions, enabled_layers),
+		enabled_layers);
 
 	if (logger != nullptr)
 	{
@@ -169,7 +171,7 @@ VulkanApplicationBuilder::EnableValidationLayer(
 	if (!enabled) {
 		return *this;
 	}
-	preferredLayers.push_back("VK_LAYER_LUNARG_standard_validation");
+	preferredLayers.push_back("VK_LAYER_KHRONOS_validation");
 	return *this;
 }
 
