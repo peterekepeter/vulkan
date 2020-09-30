@@ -38,12 +38,21 @@ public:
 
 	VulkanGraphicsPipelineBuilder& NoVertexInput();
 
-	VulkanGraphicsPipelineBuilder& AssemblyTriangleList() { return SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_POINT_LIST); }
+	VulkanGraphicsPipelineBuilder& AssemblyTriangleList() { return SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST); }
 	VulkanGraphicsPipelineBuilder& AssemblyEnableRestart() { return SetInputAssemblyPrimitiveRestart(true); }
 	VulkanGraphicsPipelineBuilder& Viewport(uint32_t width, uint32_t height) { return SetViewportSize(width, height).SetViewportPosition(0, 0).SetScissorOffset(0, 0).SetScissorExtent(width, height); }
 	VulkanGraphicsPipelineBuilder& CullNone() { return SetCullMode(VK_CULL_MODE_NONE); }
 	VulkanGraphicsPipelineBuilder& CullClockwise() { return SetCullMode(VK_CULL_MODE_BACK_BIT).SetFrontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE); }
 	VulkanGraphicsPipelineBuilder& CullCounterClockwise() { return SetCullMode(VK_CULL_MODE_BACK_BIT).SetFrontFace(VK_FRONT_FACE_CLOCKWISE); }
+	VulkanGraphicsPipelineBuilder& PolygonModeFill() { return SetPolygonMode(VK_POLYGON_MODE_FILL); }
+	VulkanGraphicsPipelineBuilder& PolygonModeLine(float lineWidth = 1.0f) { return SetPolygonMode(VK_POLYGON_MODE_LINE).SetLineWidth(lineWidth); }
+	VulkanGraphicsPipelineBuilder& PolygonModePoint() { return SetPolygonMode(VK_POLYGON_MODE_POINT); }
+
+	VulkanGraphicsPipelineBuilder& NoBlend() { return SetLogicBlendEnable(false).SetColorBlendEnable(false); }
+	VulkanGraphicsPipelineBuilder& BlendClassicAlpha() { return SetColorBlendEnable(true).SetColorBlend(VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA).SetAlphaBlend(VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE); }
+	VulkanGraphicsPipelineBuilder& BlendPremultipliedAlpha() { return SetColorBlendEnable(true).SetColorBlend(VK_BLEND_FACTOR_ONE, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA).SetAlphaBlend(VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE); }
+	VulkanGraphicsPipelineBuilder& BlendSoftAdditive() { return SetColorBlendEnable(true).SetColorBlend(VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_SRC_ALPHA).SetAlphaBlend(VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE); }
+	VulkanGraphicsPipelineBuilder& BlendAdditive() { return SetColorBlendEnable(true).SetColorBlend(VK_BLEND_FACTOR_ONE, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE).SetAlphaBlend(VK_BLEND_FACTOR_ONE, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE); }
 
 	// setters
 
@@ -81,45 +90,38 @@ public:
 	VulkanGraphicsPipelineBuilder& SetDepthBiasSlopeFactor(float depthBiasSlopeFactor) { rasterizerState.depthBiasSlopeFactor = depthBiasSlopeFactor; return *this; }
 	VulkanGraphicsPipelineBuilder& SetLineWidth(float lineWidth) { rasterizerState.lineWidth = lineWidth; return *this; } 
 
+	VulkanGraphicsPipelineBuilder& SetLogicBlendEnable(bool enable) { colorBlendState.logicOpEnable = enable ? VK_TRUE : VK_FALSE; return *this; }
+	VulkanGraphicsPipelineBuilder& SetLogicBlendOp(VkLogicOp logicOp) { colorBlendState.logicOp = logicOp; return *this; }
+	VulkanGraphicsPipelineBuilder& SetBlendConstants(float c0, float c1, float c2, float c3) { colorBlendState.blendConstants[0] = c0; colorBlendState.blendConstants[1] = c1; colorBlendState.blendConstants[2] = c2; colorBlendState.blendConstants[3] = c3; return *this; }
 
+	VulkanGraphicsPipelineBuilder& SetColorBlendEnable(bool enable) { colorBlendAttachment.blendEnable = enable ? VK_TRUE : VK_FALSE; return *this; }
+	VulkanGraphicsPipelineBuilder& SetSrcColorBlendFactor(VkBlendFactor blendFactor) { colorBlendAttachment.srcColorBlendFactor = blendFactor; return *this; }
+	VulkanGraphicsPipelineBuilder& SetDstColorBlendFactor(VkBlendFactor blendFactor) { colorBlendAttachment.dstColorBlendFactor = blendFactor; return *this; }
+	VulkanGraphicsPipelineBuilder& SetSrcAlphaBlendFactor(VkBlendFactor blendFactor) { colorBlendAttachment.srcAlphaBlendFactor = blendFactor; return *this; }
+	VulkanGraphicsPipelineBuilder& SetDstAlphaBlendFactor(VkBlendFactor blendFactor) { colorBlendAttachment.dstAlphaBlendFactor = blendFactor; return *this; }
+	VulkanGraphicsPipelineBuilder& SetColorBlendOp(VkBlendOp blendOp) { colorBlendAttachment.colorBlendOp = blendOp; return *this; }
+	VulkanGraphicsPipelineBuilder& SetAlphaBlendOp(VkBlendOp blendOp) { colorBlendAttachment.alphaBlendOp = blendOp; return *this; }
+	VulkanGraphicsPipelineBuilder& SetColorBlend(VkBlendFactor src, VkBlendOp op, VkBlendFactor dst) { return SetSrcColorBlendFactor(src).SetColorBlendOp(op).SetDstColorBlendFactor(dst); }
+	VulkanGraphicsPipelineBuilder& SetAlphaBlend(VkBlendFactor src, VkBlendOp op, VkBlendFactor dst) { return SetSrcAlphaBlendFactor(src).SetAlphaBlendOp(op).SetDstAlphaBlendFactor(dst); }
 
 	// from create info
 
-	VulkanGraphicsPipelineBuilder& SetVertexInputState(
-		const VkPipelineVertexInputStateCreateInfo& state);
-
-	VulkanGraphicsPipelineBuilder& SetInputAssemblyState(
-		const VkPipelineInputAssemblyStateCreateInfo& state);
-
-	VulkanGraphicsPipelineBuilder& SetViewportState(
-		VkPipelineViewportStateCreateInfo& state);
-
-	VulkanGraphicsPipelineBuilder& SetRasterizerState(
-		VkPipelineRasterizationStateCreateInfo& state);
-
-	VulkanGraphicsPipelineBuilder& SetMultisampleState(
-		const VkPipelineMultisampleStateCreateInfo& state);
-
-	VulkanGraphicsPipelineBuilder& SetColorBlendState(
-		const VkPipelineColorBlendStateCreateInfo& state);
-
-	VulkanGraphicsPipelineBuilder& SetPipelineLayout(
-		const VkPipelineLayout& pipelineLayout);
-
-	VulkanGraphicsPipelineBuilder& SetRenderPass(
-		const VkRenderPass& renderPass);
-
-	VulkanGraphicsPipelineBuilder& SetSubpassIndex(
-		uint32_t subpassIndex);
+	VulkanGraphicsPipelineBuilder& SetVertexInputState(const VkPipelineVertexInputStateCreateInfo& state);
+	VulkanGraphicsPipelineBuilder& SetInputAssemblyState(const VkPipelineInputAssemblyStateCreateInfo& state);
+	VulkanGraphicsPipelineBuilder& SetViewportState(VkPipelineViewportStateCreateInfo& state);
+	VulkanGraphicsPipelineBuilder& SetRasterizerState(VkPipelineRasterizationStateCreateInfo& state);
+	VulkanGraphicsPipelineBuilder& SetMultisampleState(const VkPipelineMultisampleStateCreateInfo& state);
+	VulkanGraphicsPipelineBuilder& SetColorBlendState(const VkPipelineColorBlendStateCreateInfo& state);
+	VulkanGraphicsPipelineBuilder& SetPipelineLayout(const VkPipelineLayout& pipelineLayout);
+	VulkanGraphicsPipelineBuilder& SetRenderPass(const VkRenderPass& renderPass);
+	VulkanGraphicsPipelineBuilder& SetSubpassIndex(uint32_t subpassIndex);
 
 
-	// no copy
-	VulkanGraphicsPipelineBuilder(const VulkanGraphicsPipelineBuilder& other) = default;
-	VulkanGraphicsPipelineBuilder& operator =(const VulkanGraphicsPipelineBuilder& other) = default;
-
-	// no move
-	VulkanGraphicsPipelineBuilder(VulkanGraphicsPipelineBuilder&& other) = default;
-	VulkanGraphicsPipelineBuilder& operator =(VulkanGraphicsPipelineBuilder&& other) = default;
+	// disallow copy & move
+	VulkanGraphicsPipelineBuilder(const VulkanGraphicsPipelineBuilder& other) = delete;
+	VulkanGraphicsPipelineBuilder& operator =(const VulkanGraphicsPipelineBuilder& other) = delete;
+	VulkanGraphicsPipelineBuilder(VulkanGraphicsPipelineBuilder&& other) = delete;
+	VulkanGraphicsPipelineBuilder& operator =(VulkanGraphicsPipelineBuilder&& other) = delete;
 
 
 private:
@@ -137,6 +139,7 @@ private:
 
 	VkViewport viewport;
 	VkRect2D scissor;
+	VkPipelineColorBlendAttachmentState colorBlendAttachment;
 
 	static const auto MAX_DYNAMIC_STATE = 8;
 	VkDynamicState dynamicState[MAX_DYNAMIC_STATE];
@@ -152,10 +155,13 @@ private:
 inline VulkanGraphicsPipelineBuilder::VulkanGraphicsPipelineBuilder(VkDevice vkDevice)
 	: vkDevice(vkDevice)
 {
+	// initialize structures and add sensible defaults
 	vertexInputState = {};
 	vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	inputAssemblyState = {};
 	inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	inputAssemblyState.primitiveRestartEnable = VK_FALSE;
 	viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewportState.viewportCount = 1;
@@ -167,10 +173,24 @@ inline VulkanGraphicsPipelineBuilder::VulkanGraphicsPipelineBuilder(VkDevice vkD
 	scissor = {};
 	rasterizerState = {};
 	rasterizerState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	rasterizerState.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizerState.polygonMode = VK_POLYGON_MODE_FILL;
+	rasterizerState.cullMode = VK_CULL_MODE_BACK_BIT;
+	rasterizerState.lineWidth = 1.0f;
 	multisampleState = {};
 	multisampleState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	multisampleState.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisampleState.minSampleShading = 1.0f;
 	colorBlendState = {};
 	colorBlendState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	colorBlendState.attachmentCount = 1;
+	colorBlendState.pAttachments = &colorBlendAttachment;
+	colorBlendState.blendConstants[0] = 0.0f;
+	colorBlendState.blendConstants[1] = 0.0f;
+	colorBlendState.blendConstants[2] = 0.0f;
+	colorBlendState.blendConstants[3] = 0.0f;
+	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	colorBlendAttachment.blendEnable = VK_FALSE;
 	subpass = 0;
 	vkPipelineLayout = VK_NULL_HANDLE;
 	vkRenderPass = VK_NULL_HANDLE;
