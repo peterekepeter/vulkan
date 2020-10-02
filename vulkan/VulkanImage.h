@@ -4,22 +4,29 @@
 class VulkanImage
 {
 public:
-	VkDevice vkDeviceHandle;
-	VkImage vkImageHandle;
-	VulkanMemory memory;
+	VkDevice m_vk_device;
+	VkImage m_vk_image;
+	VulkanMemory m_memory;
 
 	// nice to have so we can create other compatible objects
-	VkImageType vkImageType;
-	VkFormat vkFormat;
-	VkSampleCountFlagBits vkSampleCountFlagBits;
+	VkImageType m_vk_image_type;
+	VkFormat m_vk_format;
+	VkSampleCountFlagBits m_vk_sample_count_flag_bits;
 
-	VulkanImage() : vkDeviceHandle(VK_NULL_HANDLE), vkImageHandle(VK_NULL_HANDLE) { }
+	VulkanImage() 
+		: m_vk_device(VK_NULL_HANDLE)
+		, m_vk_image(VK_NULL_HANDLE)
+		, m_vk_image_type(VK_IMAGE_TYPE_2D)
+		, m_vk_format(VK_FORMAT_R8G8B8A8_SRGB)
+		, m_vk_sample_count_flag_bits(VK_SAMPLE_COUNT_1_BIT)
+	{
+	}
 
-	VulkanImage(VkDevice device, const VkImageCreateInfo& createInfo) : vkDeviceHandle(device) {
-		vkImageType = createInfo.imageType;
-		vkFormat = createInfo.format;
-		vkSampleCountFlagBits = createInfo.samples;
-		switch (vkCreateImage(vkDeviceHandle, &createInfo, nullptr, &vkImageHandle)) {
+	VulkanImage(VkDevice device, const VkImageCreateInfo& createInfo) : m_vk_device(device) {
+		m_vk_image_type = createInfo.imageType;
+		m_vk_format = createInfo.format;
+		m_vk_sample_count_flag_bits = createInfo.samples;
+		switch (vkCreateImage(m_vk_device, &createInfo, nullptr, &m_vk_image)) {
 		case VK_SUCCESS:
 			break;
 		case VK_ERROR_OUT_OF_HOST_MEMORY:
@@ -32,20 +39,20 @@ public:
 	}
 
 	~VulkanImage() {
-		if (vkImageHandle != VK_NULL_HANDLE) {
-			vkDestroyImage(vkDeviceHandle, vkImageHandle, nullptr);
-			vkImageHandle = VK_NULL_HANDLE;
+		if (m_vk_image != VK_NULL_HANDLE) {
+			vkDestroyImage(m_vk_device, m_vk_image, nullptr);
+			m_vk_image = VK_NULL_HANDLE;
 		}
 	}
 
 	VulkanImage(VulkanImage&& other) noexcept {
-		vkDeviceHandle = other.vkDeviceHandle;
-		vkImageHandle = other.vkImageHandle;
-		vkFormat = other.vkFormat;
-		vkSampleCountFlagBits = other.vkSampleCountFlagBits;
-		vkImageType = other.vkImageType;
-		memory = std::move(other.memory);
-		other.vkImageHandle = VK_NULL_HANDLE;
+		m_vk_device = other.m_vk_device;
+		m_vk_image = other.m_vk_image;
+		m_vk_format = other.m_vk_format;
+		m_vk_sample_count_flag_bits = other.m_vk_sample_count_flag_bits;
+		m_vk_image_type = other.m_vk_image_type;
+		m_memory = std::move(other.m_memory);
+		other.m_vk_image = VK_NULL_HANDLE;
 	}
 
 	VulkanImage(const VulkanImage& other) = delete;
@@ -57,18 +64,18 @@ public:
 	public:
 
 		operator VulkanImage() {
-			createInfo.queueFamilyIndexCount = indices.size();
-			createInfo.pQueueFamilyIndices = indices.data();
+			createInfo.queueFamilyIndexCount = indexes.size();
+			createInfo.pQueueFamilyIndices = indexes.data();
 			VulkanImage image = VulkanImage(imageMemoryAllocator.device, createInfo);
 			switch (memoryTypeHostVisible) {
 			case true:
-				image.memory = imageMemoryAllocator.AllocateHostVisibleAndCoherent(image.vkImageHandle);
+				image.m_memory = imageMemoryAllocator.AllocateHostVisibleAndCoherent(image.m_vk_image);
 				break;
 			case false:
-				image.memory = imageMemoryAllocator.AllocateDeviceLocal(image.vkImageHandle);
+				image.m_memory = imageMemoryAllocator.AllocateDeviceLocal(image.m_vk_image);
 				break;
 			}
-			imageMemoryAllocator.BindImageMemory(image.vkImageHandle, image.memory);
+			imageMemoryAllocator.BindImageMemory(image.m_vk_image, image.m_memory);
 			return image;
 		}
 
@@ -76,87 +83,86 @@ public:
 
 		VulkanImageMemoryAllocator& imageMemoryAllocator;
 		VkImageCreateInfo createInfo;
-		std::vector<uint32_t> indices;
+		std::vector<uint32_t> indexes;
 		bool memoryTypeHostVisible = false;
 
 		Builder(VulkanImageMemoryAllocator& allocator) : imageMemoryAllocator(allocator) {
 			createInfo = {};
 			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-			ClearFlagBits()
-				.SetImageType(VK_IMAGE_TYPE_2D)
-				.SetFormat(Builder::DefaultImageFormat)
-				.SetExtent(1, 1, 1)
-				.SetInitialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
-				.SetMipLevels(1)
-				.SetArrayLayers(1)
-				.SetSampleCount(VK_SAMPLE_COUNT_1_BIT)
-				.OptimalTiling()
-				.ClearFlagBits()
-				.SetSharingMode(VK_SHARING_MODE_EXCLUSIVE)
-				.ClearQueueFamilyIndices();
+			clear_flag_bits()
+				.set_image_type(VK_IMAGE_TYPE_2D)
+				.set_format(Builder::DefaultImageFormat)
+				.set_extent(1, 1, 1)
+				.set_initial_layout(VK_IMAGE_LAYOUT_UNDEFINED)
+				.set_mip_levels(1)
+				.set_array_layers(1)
+				.set_sample_count(VK_SAMPLE_COUNT_1_BIT)
+				.optimal_tiling()
+				.clear_flag_bits()
+				.set_sharing_mode(VK_SHARING_MODE_EXCLUSIVE)
+				.clear_queue_family_indexes();
 		}
 
 		// commonly used and supported RGBA formats
 
-		Builder& FormatR8G8B8A8_UNORM() { return SetFormat(CommonImageFormats::R8G8B8A8_UNORM); }
-		Builder& FormatR8G8B8A8_SRGB() { return SetFormat(CommonImageFormats::R8G8B8A8_SRGB); }
-		Builder& FormatR16G16B16A16_SFLOAT() { return SetFormat(CommonImageFormats::R16G16B16A16_SFLOAT); }
-		Builder& FormatR32G32B32A32_SFLOAT() { return SetFormat(CommonImageFormats::R32G32B32A32_SFLOAT); }
+		Builder& format_R8G8B8A8_UNORM() { return set_format(CommonImageFormats::R8G8B8A8_UNORM); }
+		Builder& format_R8G8B8A8_SRGB() { return set_format(CommonImageFormats::R8G8B8A8_SRGB); }
+		Builder& format_R16G16B16A16_SFLOAT() { return set_format(CommonImageFormats::R16G16B16A16_SFLOAT); }
+		Builder& format_R32G32B32A32_SFLOAT() { return set_format(CommonImageFormats::R32G32B32A32_SFLOAT); }
 
 		// commonly used and supported 2 component formats
 
-		Builder& FormatR8G8_UNORM() { return SetFormat(CommonImageFormats::R8G8_UNORM); }
-		Builder& FormatR16G16_SFLOAT() { return SetFormat(CommonImageFormats::R16G16_SFLOAT); }
-		Builder& FormatR32G32_SFLOAT() { return SetFormat(CommonImageFormats::R32G32_SFLOAT); }
+		Builder& format_R8G8_UNORM() { return set_format(CommonImageFormats::R8G8_UNORM); }
+		Builder& format_R16G16_SFLOAT() { return set_format(CommonImageFormats::R16G16_SFLOAT); }
+		Builder& format_R32G32_SFLOAT() { return set_format(CommonImageFormats::R32G32_SFLOAT); }
 
 		// commonly used and supported 1 component formats
 
-		Builder& FormatR8_UNORM() { return SetFormat(CommonImageFormats::R8_UNORM); }
-		Builder& FormatR16_SFLOAT() { return SetFormat(CommonImageFormats::R16_SFLOAT); }
-		Builder& FormatR32_SFLOAT() { return SetFormat(CommonImageFormats::R32_SFLOAT); }
+		Builder& format_R8_UNORM() { return set_format(CommonImageFormats::R8_UNORM); }
+		Builder& format_R16_SFLOAT() { return set_format(CommonImageFormats::R16_SFLOAT); }
+		Builder& format_R32_SFLOAT() { return set_format(CommonImageFormats::R32_SFLOAT); }
 
 		// shortcuts
 
-		Builder& Image1D(uint32_t width) { return SetImageType(VK_IMAGE_TYPE_1D).SetExtent(width); }
-		Builder& Image2D(uint32_t width, uint32_t height) { return SetImageType(VK_IMAGE_TYPE_2D).SetExtent(width, height); }
-		Builder& Image3D(uint32_t width, uint32_t height, uint32_t depth) { return SetImageType(VK_IMAGE_TYPE_3D).SetExtent(width, height, depth); }
-		Builder& ImageCube(uint32_t widthAndHeight) { return Image2D(widthAndHeight, widthAndHeight).SetArrayLayers(6).SetFlagBits(VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT); }
-		Builder& HostVisibleAndCoherent() { return SetTiling(VK_IMAGE_TILING_LINEAR).SetMemoryType(true); }
-		Builder& OptimalTiling() { return SetTiling(VK_IMAGE_TILING_OPTIMAL); }
-		Builder& LinearTiling() { return SetTiling(VK_IMAGE_TILING_LINEAR); }
-		Builder& ShareWith(uint32_t queueFamilyIndex) { return SetSharingMode(VK_SHARING_MODE_CONCURRENT).AddQueueFamilyIndex(queueFamilyIndex); }
-		Builder& UsageTransferSrc() { return AddUsageFlagBits(VK_IMAGE_USAGE_TRANSFER_SRC_BIT); }
-		Builder& UsageTransferDst() { return AddUsageFlagBits(VK_IMAGE_USAGE_TRANSFER_DST_BIT); }
-		Builder& UsageTransferSrcDst() { return UsageTransferSrc().UsageTransferDst(); }
-		Builder& UsageSampled() { return AddUsageFlagBits(VK_IMAGE_USAGE_SAMPLED_BIT); }
-		Builder& UsageStorage() { return AddUsageFlagBits(VK_IMAGE_USAGE_STORAGE_BIT); }
-		Builder& UsageColorAttachement() { return AddUsageFlagBits(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT); }
-		Builder& UsageDepthStencilAttachement() { return AddUsageFlagBits(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT); }
-		Builder& UsageTransientAttachement() { return AddUsageFlagBits(VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT); }
-		Builder& UsageInputAttachement() { return AddUsageFlagBits(VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT); }
+		Builder& image_1d(uint32_t width) { return set_image_type(VK_IMAGE_TYPE_1D).set_extent(width); }
+		Builder& image_2d(uint32_t width, uint32_t height) { return set_image_type(VK_IMAGE_TYPE_2D).set_extent(width, height); }
+		Builder& image_3d(uint32_t width, uint32_t height, uint32_t depth) { return set_image_type(VK_IMAGE_TYPE_3D).set_extent(width, height, depth); }
+		Builder& image_cube(uint32_t widthAndHeight) { return image_2d(widthAndHeight, widthAndHeight).set_array_layers(6).set_flag_bits(VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT); }
+		Builder& host_visible_and_coherent() { return set_tiling(VK_IMAGE_TILING_LINEAR).set_memory_host_visible_and_coherent(true); }
+		Builder& optimal_tiling() { return set_tiling(VK_IMAGE_TILING_OPTIMAL); }
+		Builder& linear_tiling() { return set_tiling(VK_IMAGE_TILING_LINEAR); }
+		Builder& share_with(uint32_t queueFamilyIndex) { return set_sharing_mode(VK_SHARING_MODE_CONCURRENT).add_queue_family_index(queueFamilyIndex); }
+		Builder& usage_transfer_src() { return add_usage_flag_bits(VK_IMAGE_USAGE_TRANSFER_SRC_BIT); }
+		Builder& usage_transfer_dst() { return add_usage_flag_bits(VK_IMAGE_USAGE_TRANSFER_DST_BIT); }
+		Builder& usage_transfer_src_dst() { return usage_transfer_src().usage_transfer_dst(); }
+		Builder& usage_sampled() { return add_usage_flag_bits(VK_IMAGE_USAGE_SAMPLED_BIT); }
+		Builder& usage_storage() { return add_usage_flag_bits(VK_IMAGE_USAGE_STORAGE_BIT); }
+		Builder& usage_color_attachment() { return add_usage_flag_bits(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT); }
+		Builder& usage_depth_stencil_attachment() { return add_usage_flag_bits(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT); }
+		Builder& usage_transient_attachment() { return add_usage_flag_bits(VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT); }
+		Builder& usage_input_attachment() { return add_usage_flag_bits(VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT); }
 
 		// properties
 
-		Builder& SetFlagBits(VkImageCreateFlagBits flag) { createInfo.flags = flag; return *this; }
-		Builder& ClearFlagBits() { createInfo.flags = 0; return *this; }
-		Builder& SetImageType(VkImageType type) { createInfo.imageType = type; return *this; }
-		Builder& SetFormat(VkFormat format) { createInfo.format = format; return *this; }
-		Builder& SetExtent(VkExtent3D extent) { createInfo.extent = extent; return *this; }
-		Builder& SetExtent(uint32_t width, uint32_t height = 1, uint32_t depth = 1) { createInfo.extent = { width, height, depth }; return *this; }
-		Builder& SetMipLevels(uint32_t count) { createInfo.mipLevels = count; return *this; };
-		Builder& SetArrayLayers(uint32_t count) { createInfo.arrayLayers = count; return *this; };
-		Builder& SetSampleCount(VkSampleCountFlagBits sampleCount) { createInfo.samples = sampleCount; return *this; };
-		Builder& SetTiling(VkImageTiling imageTiling) { createInfo.tiling = imageTiling; return *this; };
-		Builder& SetUsageFlagBits(VkImageUsageFlagBits usage) { createInfo.usage = usage; return *this; };
-		Builder& AddUsageFlagBits(VkImageUsageFlagBits usage) { createInfo.usage |= usage; return *this; };
-		Builder& ClearUsageFlagBits() { createInfo.usage = 0; return *this; };
-		Builder& SetSharingMode(VkSharingMode sharingMode) { createInfo.sharingMode = sharingMode; return *this; };
-		Builder& SetInitialLayout(VkImageLayout layout) { createInfo.initialLayout = layout; return *this; };
-		Builder& AddQueueFamilyIndex(uint32_t index) { indices.push_back(index); return *this; };
-		Builder& ClearQueueFamilyIndices() { indices.clear(); return *this; };
-		Builder& SetMemoryType(bool hostVisibleAndCoherent) { memoryTypeHostVisible = hostVisibleAndCoherent; return *this; }
+		Builder& set_flag_bits(VkImageCreateFlagBits flag) { createInfo.flags = flag; return *this; }
+		Builder& clear_flag_bits() { createInfo.flags = 0; return *this; }
+		Builder& set_image_type(VkImageType type) { createInfo.imageType = type; return *this; }
+		Builder& set_format(VkFormat format) { createInfo.format = format; return *this; }
+		Builder& set_extent(VkExtent3D extent) { createInfo.extent = extent; return *this; }
+		Builder& set_extent(uint32_t width, uint32_t height = 1, uint32_t depth = 1) { createInfo.extent = { width, height, depth }; return *this; }
+		Builder& set_mip_levels(uint32_t count) { createInfo.mipLevels = count; return *this; };
+		Builder& set_array_layers(uint32_t count) { createInfo.arrayLayers = count; return *this; };
+		Builder& set_sample_count(VkSampleCountFlagBits sampleCount) { createInfo.samples = sampleCount; return *this; };
+		Builder& set_tiling(VkImageTiling imageTiling) { createInfo.tiling = imageTiling; return *this; };
+		Builder& set_usage_flag_bits(VkImageUsageFlagBits usage) { createInfo.usage = usage; return *this; };
+		Builder& add_usage_flag_bits(VkImageUsageFlagBits usage) { createInfo.usage |= usage; return *this; };
+		Builder& clear_usage_flag_bits() { createInfo.usage = 0; return *this; };
+		Builder& set_sharing_mode(VkSharingMode sharingMode) { createInfo.sharingMode = sharingMode; return *this; };
+		Builder& set_initial_layout(VkImageLayout layout) { createInfo.initialLayout = layout; return *this; };
+		Builder& add_queue_family_index(uint32_t index) { indexes.push_back(index); return *this; };
+		Builder& clear_queue_family_indexes() { indexes.clear(); return *this; };
+		Builder& set_memory_host_visible_and_coherent(bool hostVisibleAndCoherent) { memoryTypeHostVisible = hostVisibleAndCoherent; return *this; }
 
 	};
-
 
 };

@@ -58,14 +58,14 @@ public:
 			return VulkanImageView(vkDeviceHandle, createInfo);
 		}
 
-		Builder(const VulkanImage& image) : vkDeviceHandle(image.vkDeviceHandle) {
+		Builder(const VulkanImage& image) : vkDeviceHandle(image.m_vk_device) {
 			createInfo = {};
 			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 			SetDefaults();
 			// we can propagate image, format and image type from a VulkanImage
-			SetImage(image.vkImageHandle);
-			SetFormat(image.vkFormat);
-			switch (image.vkImageType) {
+			SetImage(image.m_vk_image);
+			SetFormat(image.m_vk_format);
+			switch (image.m_vk_image_type) {
 			case VK_IMAGE_TYPE_1D:
 				SetImageViewType(VK_IMAGE_VIEW_TYPE_1D);
 				break;
