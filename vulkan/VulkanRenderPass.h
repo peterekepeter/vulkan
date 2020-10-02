@@ -60,18 +60,22 @@ public:
 			m_info.pSubpasses = m_subpass_descriptions.data();
 			m_info.dependencyCount = m_subpass_dependencies.size();
 			m_info.pDependencies = m_subpass_dependencies.data();
+			for (auto& subpass_builder : m_subpass_builders)
+			{
+				subpass_builder.build_descriptor();
+			}
 			return VulkanRenderPass(m_vk_device, m_info);
 		}
 
 		class Subpass;
 		Builder::Subpass& add_subpass();
 
-		class Attachement {
+		class Attachment {
 		public:
 			Builder& m_builder;
 			VkAttachmentDescription& m_description;
 
-			Attachement(Builder& builder, VkAttachmentDescription& description) : m_builder(builder) , m_description(description) { }
+			Attachment(Builder& builder, VkAttachmentDescription& description) : m_builder(builder) , m_description(description) { }
 
 			static void SetDefaults(VkAttachmentDescription& attachment_description) {
 				attachment_description = {};
@@ -88,49 +92,54 @@ public:
 
 			// shortcuts
 
-			Attachement& load_initial_color_depth() { return set_load_op(VK_ATTACHMENT_LOAD_OP_LOAD); }
-			Attachement& clear_initial_color_depth() { return set_load_op(VK_ATTACHMENT_LOAD_OP_CLEAR); }
-			Attachement& dont_care_initial_color_depth() { return set_load_op(VK_ATTACHMENT_LOAD_OP_DONT_CARE); }
-			Attachement& store_final_color_depth() { return set_store_op(VK_ATTACHMENT_STORE_OP_DONT_CARE); }
-			Attachement& dont_care_final_color_depth() { return set_store_op(VK_ATTACHMENT_STORE_OP_DONT_CARE); }
+			Attachment& from(const VulkanImage& image) { return set_format(image.m_vk_format).set_samples(image.m_vk_sample_count_flag_bits); }
 
-			Attachement& load_initial_stencil() { return set_stencil_load_op(VK_ATTACHMENT_LOAD_OP_LOAD); }
-			Attachement& clear_initial_stencil() { return set_stencil_load_op(VK_ATTACHMENT_LOAD_OP_CLEAR); }
-			Attachement& dont_care_initial_stencil() { return set_stencil_load_op(VK_ATTACHMENT_LOAD_OP_DONT_CARE); }
-			Attachement& store_final_stencil() { return set_stencil_store_op(VK_ATTACHMENT_STORE_OP_DONT_CARE); }
-			Attachement& dont_care_final_stencil() { return set_stencil_store_op(VK_ATTACHMENT_STORE_OP_DONT_CARE); }
+			Attachment& load_initial_color_depth() { return set_load_op(VK_ATTACHMENT_LOAD_OP_LOAD); }
+			Attachment& clear_initial_color_depth() { return set_load_op(VK_ATTACHMENT_LOAD_OP_CLEAR); }
+			Attachment& dont_care_initial_color_depth() { return set_load_op(VK_ATTACHMENT_LOAD_OP_DONT_CARE); }
+			Attachment& store_final_color_depth() { return set_store_op(VK_ATTACHMENT_STORE_OP_STORE); }
+			Attachment& dont_care_final_color_depth() { return set_store_op(VK_ATTACHMENT_STORE_OP_DONT_CARE); }
 
-			Attachement& color_and_depth_op(VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp) { return set_load_op(loadOp).set_store_op(storeOp); }
-			Attachement& stencil_op(VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp) { return set_stencil_load_op(loadOp).set_stencil_store_op(storeOp); }
-			Attachement& initial_layout_color_attachment() { return set_initial_layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL); }
-			Attachement& final_layout_color_attachment() { return set_final_layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL); }
-			Attachement& final_layout_present_src() { return set_final_layout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR); }
-			Attachement& final_layout_transfer_src() { return set_final_layout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL); }
-			Attachement& final_layout_transfer_dst() { return set_final_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL); }
+			Attachment& load_initial_stencil() { return set_stencil_load_op(VK_ATTACHMENT_LOAD_OP_LOAD); }
+			Attachment& clear_initial_stencil() { return set_stencil_load_op(VK_ATTACHMENT_LOAD_OP_CLEAR); }
+			Attachment& dont_care_initial_stencil() { return set_stencil_load_op(VK_ATTACHMENT_LOAD_OP_DONT_CARE); }
+			Attachment& store_final_stencil() { return set_stencil_store_op(VK_ATTACHMENT_STORE_OP_DONT_CARE); }
+			Attachment& dont_care_final_stencil() { return set_stencil_store_op(VK_ATTACHMENT_STORE_OP_DONT_CARE); }
+
+			Attachment& color_and_depth_op(VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp) { return set_load_op(loadOp).set_store_op(storeOp); }
+			Attachment& stencil_op(VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp) { return set_stencil_load_op(loadOp).set_stencil_store_op(storeOp); }
+			Attachment& initial_layout_color_attachment() { return set_initial_layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL); }
+			Attachment& final_layout_color_attachment() { return set_final_layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL); }
+			Attachment& final_layout_present_src() { return set_final_layout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR); }
+			Attachment& final_layout_transfer_src() { return set_final_layout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL); }
+			Attachment& final_layout_transfer_dst() { return set_final_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL); }
 
 			// property setters
 
-			Attachement& set_attachment_flags(VkAttachmentDescriptionFlags flags) { m_description.flags = flags; return *this; }
-			Attachement& set_format(VkFormat format) { m_description.format = format; return *this; }
-			Attachement& set_samples(VkSampleCountFlagBits samples) { m_description.samples = samples; return *this; }
-			Attachement& set_load_op(VkAttachmentLoadOp loadOp) { m_description.loadOp = loadOp; return *this; }
-			Attachement& set_store_op(VkAttachmentStoreOp storeOp) { m_description.storeOp = storeOp; return *this; }
-			Attachement& set_stencil_load_op(VkAttachmentLoadOp stencilLoadOp) { m_description.stencilLoadOp = stencilLoadOp; return *this; }
-			Attachement& set_stencil_store_op(VkAttachmentStoreOp stencilStoreOp) { m_description.stencilStoreOp = stencilStoreOp; return *this; }
-			Attachement& set_initial_layout(VkImageLayout initialLayout){ m_description.initialLayout = initialLayout; return *this; }
-			Attachement& set_final_layout(VkImageLayout finalLayout){ m_description.finalLayout = finalLayout; return *this; }
+			Attachment& set_attachment_flags(VkAttachmentDescriptionFlags flags) { m_description.flags = flags; return *this; }
+			Attachment& set_format(VkFormat format) { m_description.format = format; return *this; }
+			Attachment& set_samples(VkSampleCountFlagBits samples) { m_description.samples = samples; return *this; }
+			Attachment& set_load_op(VkAttachmentLoadOp loadOp) { m_description.loadOp = loadOp; return *this; }
+			Attachment& set_store_op(VkAttachmentStoreOp storeOp) { m_description.storeOp = storeOp; return *this; }
+			Attachment& set_stencil_load_op(VkAttachmentLoadOp stencilLoadOp) { m_description.stencilLoadOp = stencilLoadOp; return *this; }
+			Attachment& set_stencil_store_op(VkAttachmentStoreOp stencilStoreOp) { m_description.stencilStoreOp = stencilStoreOp; return *this; }
+			Attachment& set_initial_layout(VkImageLayout initialLayout){ m_description.initialLayout = initialLayout; return *this; }
+			Attachment& set_final_layout(VkImageLayout finalLayout){ m_description.finalLayout = finalLayout; return *this; }
 
 			// return expressions
 
 			operator VulkanRenderPass() { return m_builder; }
 			Builder& SetRenderPassFlags(VkRenderPassCreateFlags flags) { return m_builder.SetRenderPassFlags(flags); }
-			Builder::Attachement add_attachment() { return m_builder.add_attachment(); }
-			Builder::Attachement add_attachment(const VulkanImage& image) { return m_builder.add_attachment(image); }
+			Builder::Attachment attachment(uint32_t index) { return m_builder.attachment(index); }
+			Builder::Subpass& subpass(uint32_t index) { return m_builder.subpass(index); }
+			Builder::Attachment add_attachment() { return m_builder.add_attachment(); }
+			Builder::Attachment add_attachment(const VulkanImage& image) { return m_builder.add_attachment(image); }
 			Builder::Subpass& add_subpass() { return m_builder.add_subpass(); }
 		};
 
 		class Subpass
 		{
+			friend class Builder;
 		public:
 			Builder& m_builder;
 			VkSubpassDescription& m_description;
@@ -145,14 +154,24 @@ public:
 				m_description.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 			}
 
-			Subpass& ref_color_attachment(uint32_t index) { m_color_attachments.push_back({ index, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }); return *this; }
-			Subpass& ref_color_attachment(uint32_t index, VkImageLayout layout) { m_color_attachments.push_back({ index, layout }); return *this; }
+			Subpass& writes_color_attachment(uint32_t index) { m_color_attachments.push_back({ index, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }); return *this; }
+			Subpass& writes_color_attachment(uint32_t index, VkImageLayout layout) { m_color_attachments.push_back({ index, layout }); return *this; }
 
 			operator VulkanRenderPass() { return m_builder; }
 			Builder& SetRenderPassFlags(VkRenderPassCreateFlags flags) { return m_builder.SetRenderPassFlags(flags); }
-			Builder::Attachement add_attachment() { return m_builder.add_attachment(); }
-			Builder::Attachement add_attachment(const VulkanImage& image) { return m_builder.add_attachment(image); }
+			Builder::Attachment attachment(uint32_t index) { return m_builder.attachment(index); }
+			Builder::Subpass& subpass(uint32_t index) { return m_builder.subpass(index); }
+			Builder::Attachment add_attachment() { return m_builder.add_attachment(); }
+			Builder::Attachment add_attachment(const VulkanImage& image) { return m_builder.add_attachment(image); }
 			Builder::Subpass& add_subpass() { return m_builder.add_subpass(); }
+
+		private:
+
+			// must be called by parent builder before it builds
+			void build_descriptor() {
+				m_description.colorAttachmentCount = m_color_attachments.size();
+				m_description.pColorAttachments = m_color_attachments.data();
+			}
 		};
 
 		// property setters
@@ -161,11 +180,28 @@ public:
 
 		// subexpressions
 
-		Builder::Attachement add_attachment() { m_attachement_descriptions.push_back({}); Attachement::SetDefaults(m_attachement_descriptions.back()); return Attachement(*this, m_attachement_descriptions.back()); }
-		Builder::Attachement add_attachment(const VulkanImage& image) { 
+		Builder::Attachment add_attachment() { m_attachement_descriptions.push_back({}); Attachment::SetDefaults(m_attachement_descriptions.back()); return Attachment(*this, m_attachement_descriptions.back()); }
+		Builder::Attachment add_attachment(const VulkanImage& image) { 
 			auto subexpression = add_attachment();
-			subexpression.set_format(image.vkFormat).set_samples(image.vkSampleCountFlagBits);
+			subexpression.from(image);
 			return subexpression;
+		}
+
+		Builder::Attachment attachment(uint32_t index)
+		{
+			while (m_attachement_descriptions.size() <= index)
+			{
+				add_attachment();
+			}
+			return Attachment(*this, m_attachement_descriptions[index]);
+		}
+
+		Builder::Subpass& subpass(uint32_t index) {
+			while (m_subpass_builders.size() <= index)
+			{
+				add_subpass();
+			}
+			return m_subpass_builders[index];
 		}
 
 		std::vector<Subpass> m_subpass_builders;
