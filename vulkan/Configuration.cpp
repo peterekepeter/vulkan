@@ -51,6 +51,7 @@ void ConfigurationBuilder::ReadConsoleConfig()
 		.Option("-w", "--windowed", windowed)
 		.Option("-x", "--xres", config.xres)
 		.Option("-y", "--yres", config.yres)
+		.Option("-o", "--offline", config.offline)
 		.Option("-d", "--device-index", config.device_index)
 		.Parse(argv, argc);
 

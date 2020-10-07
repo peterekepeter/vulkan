@@ -246,7 +246,7 @@ public:
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 	VkDevice device;
 
-	SwapChainFramebuffers(VulkanSwapChain& swap, RenderPass& renderPass) : device(renderPass.device) {
+	SwapChainFramebuffers(VulkanSwapChain& swap, VkDevice device, VkRenderPass render_pass) : device(device) {
 		auto& swapChainImageViews = swap.swapChainImageViews;
 		auto& swapChainExtent = swap.extent;
 		swapChainFramebuffers.resize(swapChainImageViews.size());
@@ -257,7 +257,7 @@ public:
 
 			VkFramebufferCreateInfo framebufferInfo = {};
 			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			framebufferInfo.renderPass = renderPass.renderPass;
+			framebufferInfo.renderPass = render_pass;
 			framebufferInfo.attachmentCount = 1;
 			framebufferInfo.pAttachments = attachments;
 			framebufferInfo.width = swapChainExtent.width;
@@ -561,6 +561,44 @@ void runApplication(ApplicationServices& app) {
 	app.console.Open().Output << "Graphics queue index "  << physical.graphicsFamilyIndex << "\n";
 	app.console.Open().Output << "Present queue index "  << physical.presentFamilyIndex << "\n";
 
+
+	if (config.offline) {
+
+		VulkanImageMemoryAllocator allocator = VulkanImageMemoryAllocator(physical.physicalDevice, device.device);
+		VulkanImage image = VulkanImage::Builder(allocator).image_2d(256, 256).format_R32G32B32A32_SFLOAT().usage_color_attachment().usage_transfer_src();
+		VulkanImageView imageView = VulkanImageView::Builder(image);
+
+		VulkanRenderPass render_pass = VulkanRenderPass::Builder(device.device)
+			.attachment(0).from(image).initial_layout_color_attachment().final_layout_color_attachment().store_final_color_depth()
+			.subpass(0).writes_color_attachment(0);
+
+		app.console.Open().Output << "Reading shader binaries.\n";
+		VulkanShaderModule vertex_shader = device.CreateShaderModule(readShader("vert"));
+		VulkanShaderModule fragment_shader = device.CreateShaderModule(readShader("frag"));
+
+		VulkanDescriptorSetLayout uniform_descriptor = VulkanDescriptorSetLayout::Builder(device.device)
+			.add_uniform_buffer(0).with_both_vertex_fragment_stage_access();
+
+		VulkanPipelineLayout pipeline_layout = VulkanPipelineLayout::Builder(device.device)
+			.add(uniform_descriptor.m_vk_descriptor_set_layout);
+
+		VulkanGraphicsPipeline pipeline = VulkanGraphicsPipelineBuilder(device.device)
+			.NoVertexInput()
+			.AddVertexShaderStage(vertex_shader)
+			.AssemblyTriangleList()
+			.Viewport(256, 256)
+			.AddFragmentShaderStage(fragment_shader)
+			.BlendSoftAdditive()
+			.SetPipelineLayout(pipeline_layout.m_vk_pipeline_layout)
+			.SetRenderPass(render_pass.m_vk_render_pass)
+			.SetSubpassIndex(0)
+			.AddDynamicState(VK_DYNAMIC_STATE_VIEWPORT)
+			;
+		// hacky: disable the while after this if
+		running = false;
+
+	}
+
 	while (running) {
 
 
@@ -574,27 +612,16 @@ void runApplication(ApplicationServices& app) {
 
 		resize = false;
 
-		// render pass begins
-		VkAttachmentDescription colorAttachment = {};
-		colorAttachment.format = swap.surfaceFormat.format;
-		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		VulkanRenderPass render_pass = VulkanRenderPass::Builder(device.device)
+			.attachment(0).set_format(swap.surfaceFormat.format).dont_care_initial_color_depth().store_final_color_depth().final_layout_present_src()
+			.subpass(0).writes_color_attachment(0)
+			;
 
-		VkAttachmentReference colorAttachmentRef = {};
-		colorAttachmentRef.attachment = 0;
-		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		VulkanDescriptorSetLayout ubo_descriptor_set = VulkanDescriptorSetLayout::Builder(device.device)
+			.add_uniform_buffer(0).with_both_vertex_fragment_stage_access();
 
-		VkSubpassDescription subpass = {};
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &colorAttachmentRef;
-
-		RenderPass renderPass(device.device, colorAttachment, subpass);
+		VulkanPipelineLayout pipeline_layout = VulkanPipelineLayout::Builder(device.device)
+			.add(ubo_descriptor_set.m_vk_descriptor_set_layout);
 
 		VulkanGraphicsPipeline pipeline = VulkanGraphicsPipelineBuilder(device.device)
 			.NoVertexInput()
@@ -604,15 +631,15 @@ void runApplication(ApplicationServices& app) {
 			.Viewport(swap.extent.width, swap.extent.height)
 			.PolygonModeFill()
 			.BlendSoftAdditive()
-			.SetPipelineLayout(renderPass.pipelineLayout)
-			.SetRenderPass(renderPass.renderPass)
+			.SetPipelineLayout(pipeline_layout.m_vk_pipeline_layout)
+			.SetRenderPass(render_pass.m_vk_render_pass)
 			.SetSubpassIndex(0)
 			.AddDynamicState(VK_DYNAMIC_STATE_VIEWPORT)
 			;
 
 		VkPipeline graphicsPipeline = pipeline.vkPipeline;
 
-		SwapChainFramebuffers framebuffers(swap, renderPass);
+		SwapChainFramebuffers framebuffers(swap, device.device, render_pass.m_vk_render_pass);
 
 		CommandPool graphicsCommandPool(device.device, physical.graphicsFamilyIndex);
 		DescriptorPool descriptorPool(device.device, swap.swapChainImages.size());
@@ -642,7 +669,7 @@ void runApplication(ApplicationServices& app) {
 
 		std::vector<VkDescriptorSet> descriptorSets;
 		{
-			std::vector<VkDescriptorSetLayout> layouts(swap.swapChainImages.size(), renderPass.descriptorSetLayout);
+			std::vector<VkDescriptorSetLayout> layouts(swap.swapChainImages.size(), ubo_descriptor_set.m_vk_descriptor_set_layout);
 			VkDescriptorSetAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 			allocInfo.descriptorPool = descriptorPool.descriptorPool;
@@ -687,7 +714,7 @@ void runApplication(ApplicationServices& app) {
 
 			VkRenderPassBeginInfo renderPassInfo = {};
 			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = renderPass.renderPass;
+			renderPassInfo.renderPass = render_pass.m_vk_render_pass;
 			renderPassInfo.framebuffer = framebuffers.swapChainFramebuffers[i];
 			renderPassInfo.renderArea.offset = { 0, 0 };
 			renderPassInfo.renderArea.extent = swap.extent;
@@ -698,8 +725,15 @@ void runApplication(ApplicationServices& app) {
 
 			vkCmdBeginRenderPass(cmdBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 			vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
-			vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderPass.pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
+			vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout.m_vk_pipeline_layout, 0, 1, &descriptorSets[i], 0, nullptr);
 
+		/*	for (int x = 322; x < 333; x+=16) {
+				for (int y = 322; y < 333; y += 16) {
+					VkViewport viewport = { x, y, 16, 16, 0, 1 };
+					vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
+					vkCmdDraw(cmdBuffer, 6000000, 1, 0, 0);
+				}
+			}*/
 			VkViewport viewport = { 0, 0, swap.extent.width, swap.extent.height, 0, 1 };
 			vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
 			vkCmdDraw(cmdBuffer, 6, 1, 0, 0);
