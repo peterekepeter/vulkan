@@ -12,218 +12,207 @@ public:
 	VulkanGraphicsPipeline Build();
 	operator VulkanGraphicsPipeline();
 
-	VulkanGraphicsPipelineBuilder& AddShaderStage(
-		const VkPipelineShaderStageCreateInfo& stage);
+	VulkanGraphicsPipelineBuilder& add_shader_stage(const VkPipelineShaderStageCreateInfo& );
+	VulkanGraphicsPipelineBuilder& add_shader_stage(VkShaderStageFlagBits, VkShaderModule, const char* = "main", VkSpecializationInfo* = nullptr);
 
-	VulkanGraphicsPipelineBuilder& AddShaderStage(
-		VkShaderStageFlagBits vlStageFlagBits,
-		VkShaderModule vkShaderModule,
-		const char* entryPointName = nullptr, // defaults to "main"
-		VkSpecializationInfo* vkPSpecializationInfo = nullptr
-	);
-
-	VulkanGraphicsPipelineBuilder& AddVertexShaderStage(
-		const VulkanShaderModule& shaderModule,
-		const char* entryPointName = nullptr // defaults to "main"
-	);
-
-	VulkanGraphicsPipelineBuilder& AddFragmentShaderStage(
-		const VulkanShaderModule& shaderModule,
-		const char* entryPointName = nullptr // defaults to "main"
-	);
-
-	VulkanGraphicsPipelineBuilder& AddDynamicState(VkDynamicState dynamicState);
+	VulkanGraphicsPipelineBuilder& add_vertex_shader(const VulkanShaderModule&, const char* entry = "main");
+	VulkanGraphicsPipelineBuilder& add_fragment_shader(const VulkanShaderModule&, const char* entry = "main");
+	VulkanGraphicsPipelineBuilder& add_dynamic_state(VkDynamicState);
 
 	// shortcuts
 
-	VulkanGraphicsPipelineBuilder& NoVertexInput();
+	VulkanGraphicsPipelineBuilder& no_vertex_input();
 
-	VulkanGraphicsPipelineBuilder& AssemblyTriangleList() { return SetInputAssembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST); }
-	VulkanGraphicsPipelineBuilder& AssemblyEnableRestart() { return SetInputAssemblyPrimitiveRestart(true); }
-	VulkanGraphicsPipelineBuilder& Viewport(uint32_t width, uint32_t height) { return SetViewportSize(width, height).SetViewportPosition(0, 0).SetScissorOffset(0, 0).SetScissorExtent(width, height); }
-	VulkanGraphicsPipelineBuilder& CullNone() { return SetCullMode(VK_CULL_MODE_NONE); }
-	VulkanGraphicsPipelineBuilder& CullClockwise() { return SetCullMode(VK_CULL_MODE_BACK_BIT).SetFrontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE); }
-	VulkanGraphicsPipelineBuilder& CullCounterClockwise() { return SetCullMode(VK_CULL_MODE_BACK_BIT).SetFrontFace(VK_FRONT_FACE_CLOCKWISE); }
-	VulkanGraphicsPipelineBuilder& PolygonModeFill() { return SetPolygonMode(VK_POLYGON_MODE_FILL); }
-	VulkanGraphicsPipelineBuilder& PolygonModeLine(float lineWidth = 1.0f) { return SetPolygonMode(VK_POLYGON_MODE_LINE).SetLineWidth(lineWidth); }
-	VulkanGraphicsPipelineBuilder& PolygonModePoint() { return SetPolygonMode(VK_POLYGON_MODE_POINT); }
+	VulkanGraphicsPipelineBuilder& topology_points() { return set_input_assembly(VK_PRIMITIVE_TOPOLOGY_POINT_LIST); }
+	VulkanGraphicsPipelineBuilder& topology_lines() { return set_input_assembly(VK_PRIMITIVE_TOPOLOGY_LINE_LIST); }
+	VulkanGraphicsPipelineBuilder& topology_line_strip() { return set_input_assembly(VK_PRIMITIVE_TOPOLOGY_LINE_STRIP); }
+	VulkanGraphicsPipelineBuilder& topology_triangles() { return set_input_assembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST); }
+	VulkanGraphicsPipelineBuilder& topology_triangle_strip() { return set_input_assembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP); }
+	VulkanGraphicsPipelineBuilder& topology_triangle_fan() { return set_input_assembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN); }
+	VulkanGraphicsPipelineBuilder& topology_enable_restart() { return set_input_assembly_primitive_restart(true); }
+	VulkanGraphicsPipelineBuilder& viewport(uint32_t width, uint32_t height) { return set_viewport_size(width, height).set_viewport_position(0, 0).set_scissor_offset(0, 0).set_scissor_extent(width, height); }
+	VulkanGraphicsPipelineBuilder& cull_none() { return set_cull_mode(VK_CULL_MODE_NONE); }
+	VulkanGraphicsPipelineBuilder& cull_clockwise() { return set_cull_mode(VK_CULL_MODE_BACK_BIT).set_front_face(VK_FRONT_FACE_COUNTER_CLOCKWISE); }
+	VulkanGraphicsPipelineBuilder& cull_counter_clockwise() { return set_cull_mode(VK_CULL_MODE_BACK_BIT).set_front_face(VK_FRONT_FACE_CLOCKWISE); }
+	VulkanGraphicsPipelineBuilder& polygon_mode_fill() { return set_polygon_mode(VK_POLYGON_MODE_FILL); }
+	VulkanGraphicsPipelineBuilder& polygon_mode_line(float lineWidth = 1.0f) { return set_polygon_mode(VK_POLYGON_MODE_LINE).set_line_width(lineWidth); }
+	VulkanGraphicsPipelineBuilder& polygon_mode_point() { return set_polygon_mode(VK_POLYGON_MODE_POINT); }
 
-	VulkanGraphicsPipelineBuilder& NoBlend() { return SetLogicBlendEnable(false).SetColorBlendEnable(false); }
-	VulkanGraphicsPipelineBuilder& BlendClassicAlpha() { return SetColorBlendEnable(true).SetColorBlend(VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA).SetAlphaBlend(VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE); }
-	VulkanGraphicsPipelineBuilder& BlendPremultipliedAlpha() { return SetColorBlendEnable(true).SetColorBlend(VK_BLEND_FACTOR_ONE, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA).SetAlphaBlend(VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE); }
-	VulkanGraphicsPipelineBuilder& BlendSoftAdditive() { return SetColorBlendEnable(true).SetColorBlend(VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_SRC_ALPHA).SetAlphaBlend(VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE); }
-	VulkanGraphicsPipelineBuilder& BlendAdditive() { return SetColorBlendEnable(true).SetColorBlend(VK_BLEND_FACTOR_ONE, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE).SetAlphaBlend(VK_BLEND_FACTOR_ONE, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE); }
+	VulkanGraphicsPipelineBuilder& no_blend() { return set_logic_blend_enable(false).set_color_blend_enable(false); }
+	VulkanGraphicsPipelineBuilder& blend_classic_alpha() { return set_color_blend_enable(true).set_color_blend(VK_BLEND_FACTOR_SRC_ALPHA, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA).set_alpha_blend(VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE); }
+	VulkanGraphicsPipelineBuilder& blend_premultiplied_alpha() { return set_color_blend_enable(true).set_color_blend(VK_BLEND_FACTOR_ONE, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA).set_alpha_blend(VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE); }
+	VulkanGraphicsPipelineBuilder& blend_soft_additive() { return set_color_blend_enable(true).set_color_blend(VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_SRC_ALPHA).set_alpha_blend(VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE); }
+	VulkanGraphicsPipelineBuilder& blend_additive() { return set_color_blend_enable(true).set_color_blend(VK_BLEND_FACTOR_ONE, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE).set_alpha_blend(VK_BLEND_FACTOR_ONE, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE); }
 
 	// setters
 
-	VulkanGraphicsPipelineBuilder& SetInputAssemblyPrimitiveRestart(bool restart) { inputAssemblyState.primitiveRestartEnable = restart ? VK_TRUE : VK_FALSE; return *this; }
-	VulkanGraphicsPipelineBuilder& SetInputAssembly(VkPrimitiveTopology topology) { inputAssemblyState.topology = topology; return *this; }
+	VulkanGraphicsPipelineBuilder& set_input_assembly_primitive_restart(bool restart) { m_input_assembly_state.primitiveRestartEnable = restart ? VK_TRUE : VK_FALSE; return *this; }
+	VulkanGraphicsPipelineBuilder& set_input_assembly(VkPrimitiveTopology topology) { m_input_assembly_state.topology = topology; return *this; }
 
-	VulkanGraphicsPipelineBuilder& SetViewportX(float x) { viewport.x = x; return *this; }
-	VulkanGraphicsPipelineBuilder& SetViewportY(float y) { viewport.y = y; return *this; }
-	VulkanGraphicsPipelineBuilder& SetViewportWidth(float width) { viewport.width = width; return *this; }
-	VulkanGraphicsPipelineBuilder& SetViewportHeight(float height) { viewport.height = height; return *this; }
-	VulkanGraphicsPipelineBuilder& SetViewportMinDepth(float depth) { viewport.minDepth = depth; return *this; }
-	VulkanGraphicsPipelineBuilder& SetViewportMaxDepth(float depth) { viewport.maxDepth = depth; return *this; }
-	VulkanGraphicsPipelineBuilder& SetViewportDepth(float min, float max) { return SetViewportMinDepth(min).SetViewportMaxDepth(max); }
-	VulkanGraphicsPipelineBuilder& SetViewportPosition(float x, float y) { return SetViewportX(x).SetViewportY(y); }
-	VulkanGraphicsPipelineBuilder& SetViewportSize(float width, float height) { return SetViewportWidth(width).SetViewportHeight(height); }
+	VulkanGraphicsPipelineBuilder& set_viewport_x(float x) { m_viewport.x = x; return *this; }
+	VulkanGraphicsPipelineBuilder& set_viewport_y(float y) { m_viewport.y = y; return *this; }
+	VulkanGraphicsPipelineBuilder& set_viewport_width(float width) { m_viewport.width = width; return *this; }
+	VulkanGraphicsPipelineBuilder& set_viewport_height(float height) { m_viewport.height = height; return *this; }
+	VulkanGraphicsPipelineBuilder& set_viewport_min_depth(float depth) { m_viewport.minDepth = depth; return *this; }
+	VulkanGraphicsPipelineBuilder& set_viewport_max_depth(float depth) { m_viewport.maxDepth = depth; return *this; }
+	VulkanGraphicsPipelineBuilder& set_viewport_depth(float min, float max) { return set_viewport_min_depth(min).set_viewport_max_depth(max); }
+	VulkanGraphicsPipelineBuilder& set_viewport_position(float x, float y) { return set_viewport_x(x).set_viewport_y(y); }
+	VulkanGraphicsPipelineBuilder& set_viewport_size(float width, float height) { return set_viewport_width(width).set_viewport_height(height); }
 
-	VulkanGraphicsPipelineBuilder& SetScissorWidth(uint32_t width) { scissor.extent.width = width; return *this; }
-	VulkanGraphicsPipelineBuilder& SetScissorHeight(uint32_t height) { scissor.extent.height = height; return *this; }
-	VulkanGraphicsPipelineBuilder& SetScissorExtent(uint32_t width, uint32_t height) { return SetScissorWidth(width).SetScissorHeight(height); }
-	VulkanGraphicsPipelineBuilder& SetScissorExtent(VkExtent2D extent) { return SetScissorWidth(extent.width).SetScissorHeight(extent.height); }
-	VulkanGraphicsPipelineBuilder& SetScissorX(int32_t x) { scissor.offset.x = x; return *this; }
-	VulkanGraphicsPipelineBuilder& SetScissorY(int32_t y) { scissor.offset.y = y; return *this; }
-	VulkanGraphicsPipelineBuilder& SetScissorOffset(int32_t x, int32_t y) { return SetScissorX(x).SetScissorY(y); }
-	VulkanGraphicsPipelineBuilder& SetScissorOffset(VkOffset2D offset) { return SetScissorX(offset.x).SetScissorY(offset.y); }
+	VulkanGraphicsPipelineBuilder& set_scissor_width(uint32_t width) { m_scissor.extent.width = width; return *this; }
+	VulkanGraphicsPipelineBuilder& set_scissor_height(uint32_t height) { m_scissor.extent.height = height; return *this; }
+	VulkanGraphicsPipelineBuilder& set_scissor_extent(uint32_t width, uint32_t height) { return set_scissor_width(width).set_scissor_height(height); }
+	VulkanGraphicsPipelineBuilder& set_scissor_extent(VkExtent2D extent) { return set_scissor_width(extent.width).set_scissor_height(extent.height); }
+	VulkanGraphicsPipelineBuilder& set_scissor_x(int32_t x) { m_scissor.offset.x = x; return *this; }
+	VulkanGraphicsPipelineBuilder& set_scissor_y(int32_t y) { m_scissor.offset.y = y; return *this; }
+	VulkanGraphicsPipelineBuilder& set_scissor_offset(int32_t x, int32_t y) { return set_scissor_x(x).set_scissor_y(y); }
+	VulkanGraphicsPipelineBuilder& set_scissor_offset(VkOffset2D offset) { return set_scissor_x(offset.x).set_scissor_y(offset.y); }
 
-	VulkanGraphicsPipelineBuilder& SetDepthClampEnable(bool enable) { rasterizerState.depthClampEnable = enable ? VK_TRUE : VK_FALSE; return *this; }
-	VulkanGraphicsPipelineBuilder& SetRasterizerDiscardEnable(bool enable) { rasterizerState.rasterizerDiscardEnable = enable ? VK_TRUE : VK_FALSE; return *this; }
-	VulkanGraphicsPipelineBuilder& SetPolygonMode(VkPolygonMode mode) { rasterizerState.polygonMode = mode; return *this; }
-	VulkanGraphicsPipelineBuilder& SetCullMode(VkCullModeFlagBits cullModeFlags) { rasterizerState.cullMode = cullModeFlags; return *this; }
-	VulkanGraphicsPipelineBuilder& SetFrontFace(VkFrontFace frontFace) { rasterizerState.frontFace = frontFace; return *this; }
-	VulkanGraphicsPipelineBuilder& SetDepthBiasEnable(bool enable) { rasterizerState.depthBiasEnable = enable ? VK_TRUE : VK_FALSE; return *this; }
-	VulkanGraphicsPipelineBuilder& SetDepthBiasConstantFactor(float depthBiasConstantFactor) { rasterizerState.depthBiasConstantFactor = depthBiasConstantFactor; return *this; }
-	VulkanGraphicsPipelineBuilder& SetDepthBiasClamp(float depthBiasClamp) { rasterizerState.depthBiasClamp = depthBiasClamp; return *this; }
-	VulkanGraphicsPipelineBuilder& SetDepthBiasSlopeFactor(float depthBiasSlopeFactor) { rasterizerState.depthBiasSlopeFactor = depthBiasSlopeFactor; return *this; }
-	VulkanGraphicsPipelineBuilder& SetLineWidth(float lineWidth) { rasterizerState.lineWidth = lineWidth; return *this; } 
+	VulkanGraphicsPipelineBuilder& set_depth_clamp_enable(bool enable) { m_rasterizer_state.depthClampEnable = enable ? VK_TRUE : VK_FALSE; return *this; }
+	VulkanGraphicsPipelineBuilder& set_rasterizer_discard_enable(bool enable) { m_rasterizer_state.rasterizerDiscardEnable = enable ? VK_TRUE : VK_FALSE; return *this; }
+	VulkanGraphicsPipelineBuilder& set_polygon_mode(VkPolygonMode mode) { m_rasterizer_state.polygonMode = mode; return *this; }
+	VulkanGraphicsPipelineBuilder& set_cull_mode(VkCullModeFlagBits flags) { m_rasterizer_state.cullMode = flags; return *this; }
+	VulkanGraphicsPipelineBuilder& set_front_face(VkFrontFace face) { m_rasterizer_state.frontFace = face; return *this; }
+	VulkanGraphicsPipelineBuilder& set_depth_bias_enable(bool enable) { m_rasterizer_state.depthBiasEnable = enable ? VK_TRUE : VK_FALSE; return *this; }
+	VulkanGraphicsPipelineBuilder& set_depth_bias_constant_factor(float factor) { m_rasterizer_state.depthBiasConstantFactor = factor; return *this; }
+	VulkanGraphicsPipelineBuilder& set_depth_bias_clamp(float clamp) { m_rasterizer_state.depthBiasClamp = clamp; return *this; }
+	VulkanGraphicsPipelineBuilder& set_depth_bias_slope_factor(float factor) { m_rasterizer_state.depthBiasSlopeFactor = factor; return *this; }
+	VulkanGraphicsPipelineBuilder& set_line_width(float width) { m_rasterizer_state.lineWidth = width; return *this; } 
 
-	VulkanGraphicsPipelineBuilder& SetLogicBlendEnable(bool enable) { colorBlendState.logicOpEnable = enable ? VK_TRUE : VK_FALSE; return *this; }
-	VulkanGraphicsPipelineBuilder& SetLogicBlendOp(VkLogicOp logicOp) { colorBlendState.logicOp = logicOp; return *this; }
-	VulkanGraphicsPipelineBuilder& SetBlendConstants(float c0, float c1, float c2, float c3) { colorBlendState.blendConstants[0] = c0; colorBlendState.blendConstants[1] = c1; colorBlendState.blendConstants[2] = c2; colorBlendState.blendConstants[3] = c3; return *this; }
+	VulkanGraphicsPipelineBuilder& set_logic_blend_enable(bool enable) { m_color_blend_state.logicOpEnable = enable ? VK_TRUE : VK_FALSE; return *this; }
+	VulkanGraphicsPipelineBuilder& set_logic_blend_op(VkLogicOp op) { m_color_blend_state.logicOp = op; return *this; }
+	VulkanGraphicsPipelineBuilder& set_blend_constants(float c0, float c1, float c2, float c3) { m_color_blend_state.blendConstants[0] = c0; m_color_blend_state.blendConstants[1] = c1; m_color_blend_state.blendConstants[2] = c2; m_color_blend_state.blendConstants[3] = c3; return *this; }
 
-	VulkanGraphicsPipelineBuilder& SetColorBlendEnable(bool enable) { colorBlendAttachment.blendEnable = enable ? VK_TRUE : VK_FALSE; return *this; }
-	VulkanGraphicsPipelineBuilder& SetSrcColorBlendFactor(VkBlendFactor blendFactor) { colorBlendAttachment.srcColorBlendFactor = blendFactor; return *this; }
-	VulkanGraphicsPipelineBuilder& SetDstColorBlendFactor(VkBlendFactor blendFactor) { colorBlendAttachment.dstColorBlendFactor = blendFactor; return *this; }
-	VulkanGraphicsPipelineBuilder& SetSrcAlphaBlendFactor(VkBlendFactor blendFactor) { colorBlendAttachment.srcAlphaBlendFactor = blendFactor; return *this; }
-	VulkanGraphicsPipelineBuilder& SetDstAlphaBlendFactor(VkBlendFactor blendFactor) { colorBlendAttachment.dstAlphaBlendFactor = blendFactor; return *this; }
-	VulkanGraphicsPipelineBuilder& SetColorBlendOp(VkBlendOp blendOp) { colorBlendAttachment.colorBlendOp = blendOp; return *this; }
-	VulkanGraphicsPipelineBuilder& SetAlphaBlendOp(VkBlendOp blendOp) { colorBlendAttachment.alphaBlendOp = blendOp; return *this; }
-	VulkanGraphicsPipelineBuilder& SetColorBlend(VkBlendFactor src, VkBlendOp op, VkBlendFactor dst) { return SetSrcColorBlendFactor(src).SetColorBlendOp(op).SetDstColorBlendFactor(dst); }
-	VulkanGraphicsPipelineBuilder& SetAlphaBlend(VkBlendFactor src, VkBlendOp op, VkBlendFactor dst) { return SetSrcAlphaBlendFactor(src).SetAlphaBlendOp(op).SetDstAlphaBlendFactor(dst); }
+	VulkanGraphicsPipelineBuilder& set_color_blend_enable(bool enable) { m_color_blend_attachment.blendEnable = enable ? VK_TRUE : VK_FALSE; return *this; }
+	VulkanGraphicsPipelineBuilder& set_src_color_blend_factor(VkBlendFactor factor) { m_color_blend_attachment.srcColorBlendFactor = factor; return *this; }
+	VulkanGraphicsPipelineBuilder& set_dst_color_blend_factor(VkBlendFactor factor) { m_color_blend_attachment.dstColorBlendFactor = factor; return *this; }
+	VulkanGraphicsPipelineBuilder& set_src_alpha_blend_factor(VkBlendFactor factor) { m_color_blend_attachment.srcAlphaBlendFactor = factor; return *this; }
+	VulkanGraphicsPipelineBuilder& set_dst_alpha_blend_factor(VkBlendFactor factor) { m_color_blend_attachment.dstAlphaBlendFactor = factor; return *this; }
+	VulkanGraphicsPipelineBuilder& set_color_blend_op(VkBlendOp op) { m_color_blend_attachment.colorBlendOp = op; return *this; }
+	VulkanGraphicsPipelineBuilder& set_alpha_blend_op(VkBlendOp op) { m_color_blend_attachment.alphaBlendOp = op; return *this; }
+	VulkanGraphicsPipelineBuilder& set_color_blend(VkBlendFactor src, VkBlendOp op, VkBlendFactor dst) { return set_src_color_blend_factor(src).set_color_blend_op(op).set_dst_color_blend_factor(dst); }
+	VulkanGraphicsPipelineBuilder& set_alpha_blend(VkBlendFactor src, VkBlendOp op, VkBlendFactor dst) { return set_src_alpha_blend_factor(src).set_alpha_blend_op(op).set_dst_alpha_blend_factor(dst); }
 
 	// from create info
 
-	VulkanGraphicsPipelineBuilder& SetVertexInputState(const VkPipelineVertexInputStateCreateInfo& state);
-	VulkanGraphicsPipelineBuilder& SetInputAssemblyState(const VkPipelineInputAssemblyStateCreateInfo& state);
-	VulkanGraphicsPipelineBuilder& SetViewportState(VkPipelineViewportStateCreateInfo& state);
-	VulkanGraphicsPipelineBuilder& SetRasterizerState(VkPipelineRasterizationStateCreateInfo& state);
-	VulkanGraphicsPipelineBuilder& SetMultisampleState(const VkPipelineMultisampleStateCreateInfo& state);
-	VulkanGraphicsPipelineBuilder& SetColorBlendState(const VkPipelineColorBlendStateCreateInfo& state);
-	VulkanGraphicsPipelineBuilder& SetPipelineLayout(const VkPipelineLayout& pipelineLayout);
-	VulkanGraphicsPipelineBuilder& SetRenderPass(const VkRenderPass& renderPass);
-	VulkanGraphicsPipelineBuilder& SetSubpassIndex(uint32_t subpassIndex);
+	VulkanGraphicsPipelineBuilder& set_vertex_input_state(const VkPipelineVertexInputStateCreateInfo&);
+	VulkanGraphicsPipelineBuilder& set_input_assebly_state(const VkPipelineInputAssemblyStateCreateInfo&);
+	VulkanGraphicsPipelineBuilder& set_viewport_state(VkPipelineViewportStateCreateInfo&);
+	VulkanGraphicsPipelineBuilder& set_rasterizer_state(VkPipelineRasterizationStateCreateInfo&);
+	VulkanGraphicsPipelineBuilder& set_multisample_state(const VkPipelineMultisampleStateCreateInfo&);
+	VulkanGraphicsPipelineBuilder& set_color_blend_state(const VkPipelineColorBlendStateCreateInfo&);
+	VulkanGraphicsPipelineBuilder& set_pipeline_layot(const VkPipelineLayout&);
+	VulkanGraphicsPipelineBuilder& set_render_pass(const VkRenderPass&);
+	VulkanGraphicsPipelineBuilder& set_subpass_index(uint32_t);
 
 
-	// disallow copy & move
-	VulkanGraphicsPipelineBuilder(const VulkanGraphicsPipelineBuilder& other) = delete;
-	VulkanGraphicsPipelineBuilder& operator =(const VulkanGraphicsPipelineBuilder& other) = delete;
-	VulkanGraphicsPipelineBuilder(VulkanGraphicsPipelineBuilder&& other) = delete;
-	VulkanGraphicsPipelineBuilder& operator =(VulkanGraphicsPipelineBuilder&& other) = delete;
+	// disallow copy
+	VulkanGraphicsPipelineBuilder(const VulkanGraphicsPipelineBuilder&) = delete;
+	VulkanGraphicsPipelineBuilder& operator =(const VulkanGraphicsPipelineBuilder&) = delete;
+	// allow move
+	VulkanGraphicsPipelineBuilder(VulkanGraphicsPipelineBuilder&&) = default;
+	VulkanGraphicsPipelineBuilder& operator =(VulkanGraphicsPipelineBuilder&&) = default;
 
 
 private:
-	VkDevice vkDevice = nullptr;
+	VkDevice m_vk_device = nullptr;
 	
 	// state
-	std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-	VkPipelineVertexInputStateCreateInfo vertexInputState;
-	VkPipelineInputAssemblyStateCreateInfo inputAssemblyState;
-	VkPipelineViewportStateCreateInfo viewportState;
-	VkPipelineRasterizationStateCreateInfo rasterizerState;
-	VkPipelineMultisampleStateCreateInfo multisampleState;
-	VkPipelineColorBlendStateCreateInfo colorBlendState;
+	std::vector<VkPipelineShaderStageCreateInfo> m_shader_stages;
+	VkPipelineVertexInputStateCreateInfo m_vertex_input_state;
+	VkPipelineInputAssemblyStateCreateInfo m_input_assembly_state;
+	VkPipelineViewportStateCreateInfo m_viewport_state;
+	VkPipelineRasterizationStateCreateInfo m_rasterizer_state;
+	VkPipelineMultisampleStateCreateInfo m_multisample_state;
+	VkPipelineColorBlendStateCreateInfo m_color_blend_state;
 
-	VkViewport viewport;
-	VkRect2D scissor;
-	VkPipelineColorBlendAttachmentState colorBlendAttachment;
+	VkViewport m_viewport;
+	VkRect2D m_scissor;
+	VkPipelineColorBlendAttachmentState m_color_blend_attachment;
 
-	static const auto MAX_DYNAMIC_STATE = 8;
-	VkDynamicState dynamicState[MAX_DYNAMIC_STATE];
-	int dynamicStateCount = 0;
+	std::vector<VkDynamicState> m_dynamic_state;
 
 	// renderpass
-	VkPipelineLayout vkPipelineLayout;
-	VkRenderPass vkRenderPass;
-	uint32_t subpass;
+	VkPipelineLayout m_vk_pipeline_layout;
+	VkRenderPass m_vk_render_pass;
+	uint32_t m_subpass_index;
 };
 
 
 inline VulkanGraphicsPipelineBuilder::VulkanGraphicsPipelineBuilder(VkDevice vkDevice)
-	: vkDevice(vkDevice)
+	: m_vk_device(vkDevice)
 {
 	// initialize structures and add sensible defaults
-	vertexInputState = {};
-	vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	inputAssemblyState = {};
-	inputAssemblyState.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssemblyState.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	inputAssemblyState.primitiveRestartEnable = VK_FALSE;
-	viewportState = {};
-	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-	viewportState.viewportCount = 1;
-	viewportState.pViewports = &viewport;
-	viewportState.scissorCount = 1;
-	viewportState.pScissors = &scissor;
-	viewport = {};
-	viewport.maxDepth = 1.0f;
-	scissor = {};
-	rasterizerState = {};
-	rasterizerState.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	rasterizerState.frontFace = VK_FRONT_FACE_CLOCKWISE;
-	rasterizerState.polygonMode = VK_POLYGON_MODE_FILL;
-	rasterizerState.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizerState.lineWidth = 1.0f;
-	multisampleState = {};
-	multisampleState.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampleState.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-	multisampleState.minSampleShading = 1.0f;
-	colorBlendState = {};
-	colorBlendState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	colorBlendState.attachmentCount = 1;
-	colorBlendState.pAttachments = &colorBlendAttachment;
-	colorBlendState.blendConstants[0] = 0.0f;
-	colorBlendState.blendConstants[1] = 0.0f;
-	colorBlendState.blendConstants[2] = 0.0f;
-	colorBlendState.blendConstants[3] = 0.0f;
-	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colorBlendAttachment.blendEnable = VK_FALSE;
-	subpass = 0;
-	vkPipelineLayout = VK_NULL_HANDLE;
-	vkRenderPass = VK_NULL_HANDLE;
+	m_vertex_input_state = {};
+	m_vertex_input_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	m_input_assembly_state = {};
+	m_input_assembly_state.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	m_input_assembly_state.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	m_input_assembly_state.primitiveRestartEnable = VK_FALSE;
+	m_viewport_state = {};
+	m_viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	m_viewport_state.viewportCount = 1;
+	m_viewport_state.pViewports = &m_viewport;
+	m_viewport_state.scissorCount = 1;
+	m_viewport_state.pScissors = &m_scissor;
+	m_viewport = {};
+	m_viewport.maxDepth = 1.0f;
+	m_scissor = {};
+	m_rasterizer_state = {};
+	m_rasterizer_state.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	m_rasterizer_state.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	m_rasterizer_state.polygonMode = VK_POLYGON_MODE_FILL;
+	m_rasterizer_state.cullMode = VK_CULL_MODE_BACK_BIT;
+	m_rasterizer_state.lineWidth = 1.0f;
+	m_multisample_state = {};
+	m_multisample_state.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	m_multisample_state.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	m_multisample_state.minSampleShading = 1.0f;
+	m_color_blend_state = {};
+	m_color_blend_state.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	m_color_blend_state.attachmentCount = 1;
+	m_color_blend_state.pAttachments = &m_color_blend_attachment;
+	m_color_blend_state.blendConstants[0] = 0.0f;
+	m_color_blend_state.blendConstants[1] = 0.0f;
+	m_color_blend_state.blendConstants[2] = 0.0f;
+	m_color_blend_state.blendConstants[3] = 0.0f;
+	m_color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	m_color_blend_attachment.blendEnable = VK_FALSE;
+	m_subpass_index = 0;
+	m_vk_pipeline_layout = VK_NULL_HANDLE;
+	m_vk_render_pass = VK_NULL_HANDLE;
 }
 
 inline VulkanGraphicsPipeline VulkanGraphicsPipelineBuilder::Build()
 {
 	VkGraphicsPipelineCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	info.stageCount = shaderStages.size();
-	info.pStages = shaderStages.data();
-	info.pVertexInputState = &vertexInputState;
-	info.pInputAssemblyState = &inputAssemblyState;
-	info.pViewportState = &viewportState;
-	info.pRasterizationState = &rasterizerState;
-	info.pMultisampleState = &multisampleState;
+	info.stageCount = m_shader_stages.size();
+	info.pStages = m_shader_stages.data();
+	info.pVertexInputState = &m_vertex_input_state;
+	info.pInputAssemblyState = &m_input_assembly_state;
+	info.pViewportState = &m_viewport_state;
+	info.pRasterizationState = &m_rasterizer_state;
+	info.pMultisampleState = &m_multisample_state;
 	info.pDepthStencilState = nullptr; // Optional
-	info.pColorBlendState = &colorBlendState;
+	info.pColorBlendState = &m_color_blend_state;
 	info.pDynamicState = nullptr; // Optional
 
-	if (dynamicStateCount > 0) {
+	if (m_dynamic_state.size() > 0) {
 		VkPipelineDynamicStateCreateInfo create_info = {};
 		create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-		create_info.dynamicStateCount = dynamicStateCount;
-		create_info.pDynamicStates = dynamicState;
+		create_info.dynamicStateCount = m_dynamic_state.size();
+		create_info.pDynamicStates = m_dynamic_state.data();
 		info.pDynamicState = &create_info;
 	}
 
-	info.layout = vkPipelineLayout;
-	info.renderPass = vkRenderPass;
-	info.subpass = subpass;
+	info.layout = m_vk_pipeline_layout;
+	info.renderPass = m_vk_render_pass;
+	info.subpass = m_subpass_index;
 
 	info.basePipelineHandle = VK_NULL_HANDLE; // Optional
 	info.basePipelineIndex = -1; // Optional
-	return VulkanGraphicsPipeline(vkDevice, info);
+	return VulkanGraphicsPipeline(m_vk_device, info);
 }
 
 inline VulkanGraphicsPipelineBuilder::operator VulkanGraphicsPipeline()
@@ -231,21 +220,21 @@ inline VulkanGraphicsPipelineBuilder::operator VulkanGraphicsPipeline()
 	return Build();
 }
 
-inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::AddShaderStage(
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::add_shader_stage(
 	const VkPipelineShaderStageCreateInfo& stage)
 {
-	shaderStages.push_back(stage); // will perform copy
+	m_shader_stages.push_back(stage); // will perform copy
 	return *this;
 }
 
-inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::AddShaderStage(
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::add_shader_stage(
 	VkShaderStageFlagBits vkStageFlagBits, 
 	VkShaderModule vkShaderModule, 
 	const char* entryPointName, 
 	VkSpecializationInfo* vkPSpecializationInfo)
 {
-	shaderStages.emplace_back();
-	auto& stage = shaderStages[shaderStages.size() - 1];
+	m_shader_stages.emplace_back();
+	auto& stage = m_shader_stages[m_shader_stages.size() - 1];
 	stage = {};
 	stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	stage.stage = vkStageFlagBits;
@@ -255,89 +244,86 @@ inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::AddShaderSt
 	return *this;
 }
 
-inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::AddVertexShaderStage(const VulkanShaderModule& shaderModule, const char* entryPointName)
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::add_vertex_shader(const VulkanShaderModule& shaderModule, const char* entryPointName)
 {
-	return AddShaderStage(
+	return add_shader_stage(
 		VK_SHADER_STAGE_VERTEX_BIT,
 		shaderModule.shaderModule,
 		entryPointName);
 }
 
-inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::AddFragmentShaderStage(const VulkanShaderModule& shaderModule, const char* entryPointName)
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::add_fragment_shader(const VulkanShaderModule& shaderModule, const char* entryPointName)
 {
-	return AddShaderStage(
+	return add_shader_stage(
 		VK_SHADER_STAGE_FRAGMENT_BIT,
 		shaderModule.shaderModule,
 		entryPointName);
 }
 
-inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::AddDynamicState(VkDynamicState dynamicState)
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::add_dynamic_state(VkDynamicState state)
 {
-	if (dynamicStateCount >= MAX_DYNAMIC_STATE) {
-		throw std::runtime_error("exceeded maximum dynamic states supported by builder");
-	}
-	this->dynamicState[this->dynamicStateCount++] = dynamicState;
+	m_dynamic_state.push_back(state);
 	return *this;
 }
 
-inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::NoVertexInput()
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::no_vertex_input()
 {
-	vertexInputState.vertexBindingDescriptionCount = 0;
-	vertexInputState.pVertexBindingDescriptions = nullptr; 
-	vertexInputState.vertexAttributeDescriptionCount = 0;
-	vertexInputState.pVertexAttributeDescriptions = nullptr;
+	m_vertex_input_state.vertexBindingDescriptionCount = 0;
+	m_vertex_input_state.pVertexBindingDescriptions = nullptr; 
+	m_vertex_input_state.vertexAttributeDescriptionCount = 0;
+	m_vertex_input_state.pVertexAttributeDescriptions = nullptr;
 	return *this;
 }
 
-inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::SetVertexInputState(const VkPipelineVertexInputStateCreateInfo& state)
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::set_vertex_input_state(const VkPipelineVertexInputStateCreateInfo& state)
 {
-	vertexInputState = state;
+	m_vertex_input_state = state;
 	return *this;
 }
 
-inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::SetInputAssemblyState(const VkPipelineInputAssemblyStateCreateInfo& state)
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::set_input_assebly_state(const VkPipelineInputAssemblyStateCreateInfo& state)
 {
-	inputAssemblyState = state;
+	m_input_assembly_state = state;
 	return *this;
 }
 
-inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::SetViewportState(VkPipelineViewportStateCreateInfo& state) {
-	viewportState = state; // has pointers
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::set_viewport_state(VkPipelineViewportStateCreateInfo& state) {
+	m_viewport_state = state; // has pointers
 	return *this;
 }
 
-inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::SetRasterizerState(VkPipelineRasterizationStateCreateInfo& state)
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::set_rasterizer_state(VkPipelineRasterizationStateCreateInfo& state)
 {
-	rasterizerState = state;
+	m_rasterizer_state = state;
 	return *this;
 }
 
-inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::SetMultisampleState(const VkPipelineMultisampleStateCreateInfo& state)
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::set_multisample_state(const VkPipelineMultisampleStateCreateInfo& state)
 {
-	multisampleState = state;
+	m_multisample_state = state;
 	return *this;
 }
 
-inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::SetColorBlendState(const VkPipelineColorBlendStateCreateInfo& state)
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::set_color_blend_state(const VkPipelineColorBlendStateCreateInfo& state)
 {
-	colorBlendState = state;
+	m_color_blend_state = state;
 	return *this;
 }
 
-inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::SetPipelineLayout(const VkPipelineLayout& pipelineLayout)
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::set_pipeline_layot(const VkPipelineLayout& pipelineLayout)
 {
-	vkPipelineLayout = pipelineLayout;
+	m_vk_pipeline_layout = pipelineLayout;
 	return *this;
 }
 
-inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::SetRenderPass(const VkRenderPass& renderPass)
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::set_render_pass(const VkRenderPass& renderPass)
 {
-	vkRenderPass = renderPass;
+	m_vk_render_pass = renderPass;
 	return *this;
 }
 
-inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::SetSubpassIndex(uint32_t subpassIndex)
+inline VulkanGraphicsPipelineBuilder& VulkanGraphicsPipelineBuilder::set_subpass_index(uint32_t subpassIndex)
 {
-	subpass = subpassIndex;
+	m_subpass_index = subpassIndex;
 	return *this;
 }
