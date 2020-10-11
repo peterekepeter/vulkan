@@ -19,6 +19,7 @@
 #include "VulkanRenderPass.h"
 #include "VulkanDescriptorSetLayout.h"
 #include "VulkanPipelineLayout.h"
+#include "VulkanObjectBuilder.h"
 
 // TODO: refactor move to library
 static void makeSureDirExists(const std::string dirPath)
@@ -69,7 +70,7 @@ static bool rebuildShaders(Console& console, Configuration& config)
 	return success;
 }
 
-static std::vector<char> readFile(const std::string& filename) {
+static std::vector<char> read_file(const std::string& filename) {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
     if (!file.is_open()) {
@@ -85,10 +86,10 @@ static std::vector<char> readFile(const std::string& filename) {
 	return buffer;
 }
 
-static std::vector<char> readShader(const std::string& filename) {
+static std::vector<char> read_shader(const std::string& filename) {
 	std::string newname = filename; // copy;
 	newname = "spv\\" + filename + ".spv";
-	return readFile(newname);
+	return read_file(newname);
 }
 
 
@@ -573,8 +574,8 @@ void runApplication(ApplicationServices& app) {
 			.subpass(0).writes_color_attachment(0);
 
 		app.console.Open().Output << "Reading shader binaries.\n";
-		VulkanShaderModule vertex_shader = device.CreateShaderModule(readShader("vert"));
-		VulkanShaderModule fragment_shader = device.CreateShaderModule(readShader("frag"));
+		VulkanShaderModule vertex_shader = device.CreateShaderModule(read_shader("vert"));
+		VulkanShaderModule fragment_shader = device.CreateShaderModule(read_shader("frag"));
 
 		VulkanDescriptorSetLayout uniform_descriptor = VulkanDescriptorSetLayout::Builder(device.device)
 			.add_uniform_buffer(0).with_both_vertex_fragment_stage_access();
@@ -583,28 +584,29 @@ void runApplication(ApplicationServices& app) {
 			.add(uniform_descriptor.m_vk_descriptor_set_layout);
 
 		VulkanGraphicsPipeline pipeline = VulkanGraphicsPipelineBuilder(device.device)
-			.NoVertexInput()
-			.AddVertexShaderStage(vertex_shader)
-			.AssemblyTriangleList()
-			.Viewport(256, 256)
-			.AddFragmentShaderStage(fragment_shader)
-			.BlendSoftAdditive()
-			.SetPipelineLayout(pipeline_layout.m_vk_pipeline_layout)
-			.SetRenderPass(render_pass.m_vk_render_pass)
-			.SetSubpassIndex(0)
-			.AddDynamicState(VK_DYNAMIC_STATE_VIEWPORT)
+			.no_vertex_input()
+			.add_vertex_shader(vertex_shader)
+			.topology_triangles()
+			.viewport(256, 256)
+			.add_fragment_shader(fragment_shader)
+			.blend_soft_additive()
+			.set_pipeline_layot(pipeline_layout.m_vk_pipeline_layout)
+			.set_render_pass(render_pass.m_vk_render_pass)
+			.set_subpass_index(0)
+			.add_dynamic_state(VK_DYNAMIC_STATE_VIEWPORT)
 			;
+
 		// hacky: disable the while after this if
 		running = false;
-
 	}
+
+	VulkanObjectBuilder builder(device);
 
 	while (running) {
 
-
 		app.console.Open().Output << "Reading shader binaries.\n";
-		VulkanShaderModule vertShader = device.CreateShaderModule(readShader("vert"));
-		VulkanShaderModule fragShader = device.CreateShaderModule(readShader("frag"));
+		auto vertShader = builder.shader_module(read_shader("vert"));
+		auto fragShader = builder.shader_module(read_shader("frag"));
 
 		app.console.Open().Output << "Creating swap chain.\n";
 		physical.resetSwapChain();
@@ -612,32 +614,32 @@ void runApplication(ApplicationServices& app) {
 
 		resize = false;
 
-		VulkanRenderPass render_pass = VulkanRenderPass::Builder(device.device)
+		VulkanRenderPass render_pass = builder.render_pass()
 			.attachment(0).set_format(swap.surfaceFormat.format).dont_care_initial_color_depth().store_final_color_depth().final_layout_present_src()
 			.subpass(0).writes_color_attachment(0)
 			;
 
-		VulkanDescriptorSetLayout ubo_descriptor_set = VulkanDescriptorSetLayout::Builder(device.device)
+		VulkanDescriptorSetLayout ubo_descriptor_set = builder.desriptor_set_layout()
 			.add_uniform_buffer(0).with_both_vertex_fragment_stage_access();
 
-		VulkanPipelineLayout pipeline_layout = VulkanPipelineLayout::Builder(device.device)
+		VulkanPipelineLayout pipeline_layout = builder.pipeline_layout()
 			.add(ubo_descriptor_set.m_vk_descriptor_set_layout);
 
-		VulkanGraphicsPipeline pipeline = VulkanGraphicsPipelineBuilder(device.device)
-			.NoVertexInput()
-			.AssemblyTriangleList()
-			.AddVertexShaderStage(vertShader)
-			.AddFragmentShaderStage(fragShader)
-			.Viewport(swap.extent.width, swap.extent.height)
-			.PolygonModeFill()
-			.BlendSoftAdditive()
-			.SetPipelineLayout(pipeline_layout.m_vk_pipeline_layout)
-			.SetRenderPass(render_pass.m_vk_render_pass)
-			.SetSubpassIndex(0)
-			.AddDynamicState(VK_DYNAMIC_STATE_VIEWPORT)
+		VulkanGraphicsPipeline pipeline = builder.graphics_pipeline()
+			.no_vertex_input()
+			.topology_triangles()
+			.add_vertex_shader(vertShader)
+			.add_fragment_shader(fragShader)
+			.viewport(swap.extent.width, swap.extent.height)
+			.polygon_mode_fill()
+			.blend_soft_additive()
+			.set_pipeline_layot(pipeline_layout.m_vk_pipeline_layout)
+			.set_render_pass(render_pass.m_vk_render_pass)
+			.set_subpass_index(0)
+			.add_dynamic_state(VK_DYNAMIC_STATE_VIEWPORT)
 			;
 
-		VkPipeline graphicsPipeline = pipeline.vkPipeline;
+		VkPipeline vk_pipeline = pipeline.vkPipeline;
 
 		SwapChainFramebuffers framebuffers(swap, device.device, render_pass.m_vk_render_pass);
 
@@ -724,7 +726,7 @@ void runApplication(ApplicationServices& app) {
 			renderPassInfo.pClearValues = &clearColor;
 
 			vkCmdBeginRenderPass(cmdBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-			vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+			vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline);
 			vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout.m_vk_pipeline_layout, 0, 1, &descriptorSets[i], 0, nullptr);
 
 		/*	for (int x = 322; x < 333; x+=16) {
