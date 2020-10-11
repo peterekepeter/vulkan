@@ -4,8 +4,8 @@
 VulkanGraphicsPipeline::VulkanGraphicsPipeline(
 	VkDevice device, 
 	const VkGraphicsPipelineCreateInfo& info)
-	: vkDevice(device)
-	, vkPipeline(VK_NULL_HANDLE)
+	: m_vk_device(device)
+	, m_vk_pipeline(VK_NULL_HANDLE)
 {
 	Init(VK_NULL_HANDLE, info);
 }
@@ -14,8 +14,8 @@ VulkanGraphicsPipeline::VulkanGraphicsPipeline(
 	VkDevice device, 
 	VkPipelineCache cache, 
 	const VkGraphicsPipelineCreateInfo& info)
-	: vkDevice(device)
-	, vkPipeline(VK_NULL_HANDLE)
+	: m_vk_device(device)
+	, m_vk_pipeline(VK_NULL_HANDLE)
 {
 	Init(cache, info);
 }
@@ -42,12 +42,12 @@ void VulkanGraphicsPipeline::Init(
 	const VkGraphicsPipelineCreateInfo& info)
 {
 	auto result = vkCreateGraphicsPipelines(
-		vkDevice, 
+		m_vk_device, 
 		cache, 
 		1, 
 		&info, 
 		NULL, 
-		&this->vkPipeline);
+		&this->m_vk_pipeline);
 
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("failed to create graphics pipeline!");
@@ -56,16 +56,16 @@ void VulkanGraphicsPipeline::Init(
 
 void VulkanGraphicsPipeline::Steal(VulkanGraphicsPipeline& other)
 {
-	vkDevice = other.vkDevice;
-	vkPipeline = other.vkPipeline;
-	other.vkPipeline = VK_NULL_HANDLE;
+	m_vk_device = other.m_vk_device;
+	m_vk_pipeline = other.m_vk_pipeline;
+	other.m_vk_pipeline = VK_NULL_HANDLE;
 }
 
 void VulkanGraphicsPipeline::Free()
 {
-	if (vkPipeline == VK_NULL_HANDLE) {
+	if (m_vk_pipeline == VK_NULL_HANDLE) {
 		return;
 	}
-	vkDestroyPipeline(vkDevice, vkPipeline, nullptr);
-	vkPipeline = VK_NULL_HANDLE;
+	vkDestroyPipeline(m_vk_device, m_vk_pipeline, nullptr);
+	m_vk_pipeline = VK_NULL_HANDLE;
 }

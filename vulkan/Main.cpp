@@ -279,57 +279,6 @@ public:
 	}
 };
 
-class DescriptorPool
-{
-	VkDevice device;
-public: 
-	VkDescriptorPool descriptorPool;
-
-	DescriptorPool(VkDevice device, uint32_t count) : device(device) {
-		VkDescriptorPoolSize poolSize = {};
-		poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		poolSize.descriptorCount = count;
-
-		VkDescriptorPoolCreateInfo poolInfo = {};
-		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		poolInfo.poolSizeCount = 1;
-		poolInfo.pPoolSizes = &poolSize;
-		poolInfo.maxSets = count;
-
-		if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create descriptor pool!");
-		}
-	}
-
-	~DescriptorPool() {
-		vkDestroyDescriptorPool(device, descriptorPool, nullptr);
-	}
-};
-
-class CommandPool
-{
-public:
-
-	VkDevice device;
-	VkCommandPool commandPool;
-
-	CommandPool(VkDevice device, int queueFamilyIndex) : device(device){
-		VkCommandPoolCreateInfo poolInfo = {};
-		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-		poolInfo.queueFamilyIndex = queueFamilyIndex;
-		poolInfo.flags = 0; // Optional
-		// VK_COMMAND_POOL_CREATE_TRANSIENT_BIT // command buffers are rerecorded with new commands very often 
-		// VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT // allow command buffers to be rerecorded individually,
-		if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create command pool!");
-		}
-	}
-
-	~CommandPool() {
-		vkDestroyCommandPool(device, commandPool, nullptr);
-	}
-};
-
 static void configure(ApplicationServices& app, int argc, char** argv, char** env)
 {
 	auto& di = app.dependency;
@@ -562,6 +511,7 @@ void runApplication(ApplicationServices& app) {
 	app.console.Open().Output << "Graphics queue index "  << physical.graphicsFamilyIndex << "\n";
 	app.console.Open().Output << "Present queue index "  << physical.presentFamilyIndex << "\n";
 
+	VulkanObjectBuilder builder(device);
 
 	if (config.offline) {
 
@@ -569,18 +519,18 @@ void runApplication(ApplicationServices& app) {
 		VulkanImage image = VulkanImage::Builder(allocator).image_2d(256, 256).format_R32G32B32A32_SFLOAT().usage_color_attachment().usage_transfer_src();
 		VulkanImageView imageView = VulkanImageView::Builder(image);
 
-		VulkanRenderPass render_pass = VulkanRenderPass::Builder(device.device)
+		VulkanRenderPass render_pass = builder.render_pass()
 			.attachment(0).from(image).initial_layout_color_attachment().final_layout_color_attachment().store_final_color_depth()
 			.subpass(0).writes_color_attachment(0);
 
 		app.console.Open().Output << "Reading shader binaries.\n";
-		VulkanShaderModule vertex_shader = device.CreateShaderModule(read_shader("vert"));
-		VulkanShaderModule fragment_shader = device.CreateShaderModule(read_shader("frag"));
+		VulkanShaderModule vertex_shader = builder.shader_module(read_shader("vert"));
+		VulkanShaderModule fragment_shader = builder.shader_module(read_shader("frag"));
 
-		VulkanDescriptorSetLayout uniform_descriptor = VulkanDescriptorSetLayout::Builder(device.device)
+		VulkanDescriptorSetLayout uniform_descriptor = builder.desriptor_set_layout()
 			.add_uniform_buffer(0).with_both_vertex_fragment_stage_access();
 
-		VulkanPipelineLayout pipeline_layout = VulkanPipelineLayout::Builder(device.device)
+		VulkanPipelineLayout pipeline_layout = builder.pipeline_layout()
 			.add(uniform_descriptor.m_vk_descriptor_set_layout);
 
 		VulkanGraphicsPipeline pipeline = VulkanGraphicsPipelineBuilder(device.device)
@@ -596,11 +546,15 @@ void runApplication(ApplicationServices& app) {
 			.add_dynamic_state(VK_DYNAMIC_STATE_VIEWPORT)
 			;
 
+		VulkanDescriptorPool descriptor_pool = builder.descriptor_pool()
+			.uniform_buffers(1);
+
+		VulkanCommandPool command_pool = builder.command_pool()
+			.queue_family_index(physical.graphicsFamilyIndex);
+		
 		// hacky: disable the while after this if
 		running = false;
 	}
-
-	VulkanObjectBuilder builder(device);
 
 	while (running) {
 
@@ -639,12 +593,15 @@ void runApplication(ApplicationServices& app) {
 			.add_dynamic_state(VK_DYNAMIC_STATE_VIEWPORT)
 			;
 
-		VkPipeline vk_pipeline = pipeline.vkPipeline;
+		VkPipeline vk_pipeline = pipeline.m_vk_pipeline;
 
 		SwapChainFramebuffers framebuffers(swap, device.device, render_pass.m_vk_render_pass);
 
-		CommandPool graphicsCommandPool(device.device, physical.graphicsFamilyIndex);
-		DescriptorPool descriptorPool(device.device, swap.swapChainImages.size());
+		VulkanCommandPool command_pool = builder.command_pool()
+			.queue_family_index(physical.graphicsFamilyIndex);
+
+		VulkanDescriptorPool descriptor_pool = builder.descriptor_pool()
+			.uniform_buffers(swap.swapChainImages.size());
 
 		// uniform buffers
 		std::vector<Buffer> uniformBuffers;
@@ -661,7 +618,7 @@ void runApplication(ApplicationServices& app) {
 		commandBuffers.resize(swap.swapChainImageViews.size());
 		VkCommandBufferAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.commandPool = graphicsCommandPool.commandPool;
+		allocInfo.commandPool = command_pool.m_vk_command_pool;
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
 
@@ -674,7 +631,7 @@ void runApplication(ApplicationServices& app) {
 			std::vector<VkDescriptorSetLayout> layouts(swap.swapChainImages.size(), ubo_descriptor_set.m_vk_descriptor_set_layout);
 			VkDescriptorSetAllocateInfo allocInfo = {};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			allocInfo.descriptorPool = descriptorPool.descriptorPool;
+			allocInfo.descriptorPool = descriptor_pool.m_descriptor_pool;
 			allocInfo.descriptorSetCount = static_cast<uint32_t>(swap.swapChainImages.size());
 			allocInfo.pSetLayouts = layouts.data();
 

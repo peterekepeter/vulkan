@@ -3,8 +3,8 @@
 class VulkanGraphicsPipeline
 {
 public:
-	VkPipeline vkPipeline;
-	VkDevice vkDevice;
+	VkPipeline m_vk_pipeline;
+	VkDevice m_vk_device;
 
 	VulkanGraphicsPipeline(VkDevice, const VkGraphicsPipelineCreateInfo&);
 	VulkanGraphicsPipeline(VkDevice, VkPipelineCache, const VkGraphicsPipelineCreateInfo&);
