@@ -4,6 +4,8 @@
 #include "VulkanRenderPass.h"
 #include "VulkanDescriptorSetLayout.h"
 #include "VulkanPipelineLayout.h"
+#include "VulkanDescriptorPool.h"
+#include "VulkanCommandPool.h"
 
 // Does not map to any vulkan concept, this is just a high-level class that 
 // makes it easier to create objects.
@@ -20,4 +22,6 @@ public:
 	VulkanDescriptorSetLayout::Builder desriptor_set_layout() { return VulkanDescriptorSetLayout::Builder(m_vk_device); }
 	VulkanPipelineLayout::Builder pipeline_layout() { return VulkanPipelineLayout::Builder(m_vk_device); }
 	VulkanGraphicsPipelineBuilder graphics_pipeline() { return VulkanGraphicsPipelineBuilder(m_vk_device); }
+	VulkanDescriptorPool::Builder descriptor_pool() { return VulkanDescriptorPool::Builder(m_vk_device); }
+	VulkanCommandPool::Builder command_pool() { return VulkanCommandPool::Builder(m_vk_device); }
 };
