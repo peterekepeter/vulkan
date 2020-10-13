@@ -169,6 +169,7 @@
     <ClInclude Include="Playback.hpp" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="VulkanCommandBuffer.h" />
     <ClInclude Include="VulkanCommandPool.h" />
     <ClInclude Include="VulkanDescriptorPool.h" />
     <ClInclude Include="VulkanObjectBuilder.h" />
