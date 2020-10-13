@@ -552,6 +552,8 @@ void runApplication(ApplicationServices& app) {
 		VulkanCommandPool command_pool = builder.command_pool()
 			.queue_family_index(physical.graphicsFamilyIndex);
 		
+		VulkanCommandBuffer command_buffer = command_pool.allocate_command_buffer();
+
 		// hacky: disable the while after this if
 		running = false;
 	}
@@ -600,6 +602,7 @@ void runApplication(ApplicationServices& app) {
 		VulkanCommandPool command_pool = builder.command_pool()
 			.queue_family_index(physical.graphicsFamilyIndex);
 
+
 		VulkanDescriptorPool descriptor_pool = builder.descriptor_pool()
 			.uniform_buffers(swap.swapChainImages.size());
 
@@ -614,18 +617,8 @@ void runApplication(ApplicationServices& app) {
 		}
 
 		// command buffers
-		std::vector<VkCommandBuffer> commandBuffers;
-		commandBuffers.resize(swap.swapChainImageViews.size());
-		VkCommandBufferAllocateInfo allocInfo = {};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.commandPool = command_pool.m_vk_command_pool;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
-
-		if (vkAllocateCommandBuffers(device.device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
-			throw std::runtime_error("failed to allocate command buffers!");
-		}
-
+		auto command_buffers = command_pool.allocate_command_buffers(swap.swapChainImageViews.size());
+		
 		std::vector<VkDescriptorSet> descriptorSets;
 		{
 			std::vector<VkDescriptorSetLayout> layouts(swap.swapChainImages.size(), ubo_descriptor_set.m_vk_descriptor_set_layout);
@@ -660,14 +653,14 @@ void runApplication(ApplicationServices& app) {
 		}
 
 		// recording 
-		for (size_t i = 0; i < commandBuffers.size(); i++) {
-			auto& cmdBuffer = commandBuffers[i];
+		for (size_t i = 0; i < command_buffers.size(); i++) {
+			auto& buffer = command_buffers[i].m_vk_command_buffer;
 			VkCommandBufferBeginInfo beginInfo = {};
 			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 			beginInfo.pInheritanceInfo = nullptr; // Optional
 
-			if (vkBeginCommandBuffer(cmdBuffer, &beginInfo) != VK_SUCCESS) {
+			if (vkBeginCommandBuffer(buffer, &beginInfo) != VK_SUCCESS) {
 				throw std::runtime_error("failed to begin recording command buffer!");
 			}
 
@@ -682,9 +675,9 @@ void runApplication(ApplicationServices& app) {
 			renderPassInfo.clearValueCount = 1;
 			renderPassInfo.pClearValues = &clearColor;
 
-			vkCmdBeginRenderPass(cmdBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-			vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline);
-			vkCmdBindDescriptorSets(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout.m_vk_pipeline_layout, 0, 1, &descriptorSets[i], 0, nullptr);
+			vkCmdBeginRenderPass(buffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline);
+			vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout.m_vk_pipeline_layout, 0, 1, &descriptorSets[i], 0, nullptr);
 
 		/*	for (int x = 322; x < 333; x+=16) {
 				for (int y = 322; y < 333; y += 16) {
@@ -694,12 +687,12 @@ void runApplication(ApplicationServices& app) {
 				}
 			}*/
 			VkViewport viewport = { 0, 0, swap.extent.width, swap.extent.height, 0, 1 };
-			vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
-			vkCmdDraw(cmdBuffer, 6, 1, 0, 0);
+			vkCmdSetViewport(buffer, 0, 1, &viewport);
+			vkCmdDraw(buffer, 6, 1, 0, 0);
 
-			vkCmdEndRenderPass(cmdBuffer);
+			vkCmdEndRenderPass(buffer);
 
-			if (vkEndCommandBuffer(cmdBuffer) != VK_SUCCESS) {
+			if (vkEndCommandBuffer(buffer) != VK_SUCCESS) {
 				throw std::runtime_error("failed to record command buffer!");
 			}
 		}
@@ -801,7 +794,7 @@ void runApplication(ApplicationServices& app) {
 			submitInfo.pWaitDstStageMask = waitStages;
 
 			submitInfo.commandBufferCount = 1;
-			submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
+			submitInfo.pCommandBuffers = &command_buffers[imageIndex].m_vk_command_buffer;
 
 			VkSemaphore renderFinish[] = { renderFinishedSemaphore };
 			submitInfo.signalSemaphoreCount = 1;
