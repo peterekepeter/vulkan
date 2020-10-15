@@ -20,13 +20,13 @@ jobs:
     - name: Install SDK
       run: |
         choco install vulkan-sdk
-        echo VULKAN_SDK=$VULKAN_SDK
+        gci env:* | sort-object name
         refreshenv
-        echo VULKAN_SDK=$VULKAN_SDK
+        gci env:* | sort-object name
 
     - name: Build
       run: |
-        echo VULKAN_SDK=$VULKAN_SDK
+        gci env:* | sort-object name
         $env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE"
         devenv vulkan.sln /build
 
