@@ -1,0 +1,5 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+FULLSCREEN_TRIANGLE_VERT_RESOURCE RCDATA "fullscreen-triangle.spv"

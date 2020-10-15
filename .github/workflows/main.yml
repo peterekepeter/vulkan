@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: windows-2019
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Install SDK
+      run: |
+        choco install vulkan-sdk --version 1.2.141.0
+
+    - name: Build
+      run: |
+        $env:VULKAN_SDK="C:\VulkanSDK\1.2.141.0"
+        $env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE"
+        devenv vulkan.sln /build "Release|x86"

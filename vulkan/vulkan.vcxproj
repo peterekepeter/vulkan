@@ -164,9 +164,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AppVulkanLogger.h" />
+    <ClInclude Include="BuiltinShaders.h" />
     <ClInclude Include="CommonImageFormats.h" />
     <ClInclude Include="Configuration.hpp" />
     <ClInclude Include="Playback.hpp" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="VulkanCommandBuffer.h" />
@@ -195,6 +197,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AppVulkanLogger.cpp" />
+    <ClCompile Include="BuiltinShaders.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Playback.cpp" />
@@ -223,6 +226,22 @@
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="windows.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="fullscreen-triangle.vert">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">"$(VULKAN_SDK)\bin\glslangValidator.exe" -V "%(FullPath)" -o "%(Filename).spv"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">"$(VULKAN_SDK)\bin\glslangValidator.exe" -V "%(FullPath)" -o "%(Filename).spv"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename).spv</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(VULKAN_SDK)\bin\glslangValidator.exe" -V "%(FullPath)" -o "%(Filename).spv"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(VULKAN_SDK)\bin\glslangValidator.exe" -V "%(FullPath)" -o "%(Filename).spv"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).spv</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
