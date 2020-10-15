@@ -25,7 +25,7 @@ public:
 		info.commandBufferCount = 1;
 		VulkanCommandBuffer result;
 
-		if (vkAllocateCommandBuffers(m_vk_device, nullptr, &result.m_vk_command_buffer) != VK_SUCCESS) {
+		if (vkAllocateCommandBuffers(m_vk_device, &info, &result.m_vk_command_buffer) != VK_SUCCESS) {
 			throw std::runtime_error("failed to allocate command buffer!");
 		}
 		return result;

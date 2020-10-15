@@ -20,9 +20,10 @@
 #include "VulkanDescriptorSetLayout.h"
 #include "VulkanPipelineLayout.h"
 #include "VulkanObjectBuilder.h"
+#include "BuiltinShaders.h"
 
 // TODO: refactor move to library
-static void makeSureDirExists(const std::string dirPath)
+static void make_sure_dir_exists(const std::string dirPath)
 {
 	if (CreateDirectoryA(dirPath.c_str(), NULL) ||
 		ERROR_ALREADY_EXISTS == GetLastError())
@@ -35,7 +36,7 @@ static void makeSureDirExists(const std::string dirPath)
 	}
 }
 
-static bool rebuildShaders(Console& console, Configuration& config)
+static bool rebuild_shaders(Console& console, Configuration& config)
 {
 	if (config.vulkan_sdk == nullptr) {
 		throw std::runtime_error("rebuilding shaders requires Vulkan SDK!\n" 
@@ -46,7 +47,7 @@ static bool rebuildShaders(Console& console, Configuration& config)
 	std::string toolsPath = (*config.vulkan_sdk) + "/Bin";
 	std::string compiler = toolsPath + "/glslangValidator.exe";
 	std::string optimizer = toolsPath + "/spirv-opt.exe";
-	makeSureDirExists("spv");
+	make_sure_dir_exists("spv");
 	auto result1 = ProcessCommand::Execute(compiler 
 		+ " -V shader.frag -o spv/frag.spv");
 	auto result2 = ProcessCommand::Execute(compiler 
@@ -92,80 +93,6 @@ static std::vector<char> read_shader(const std::string& filename) {
 	return read_file(newname);
 }
 
-
-
-class RenderPass {
-public:
-	// owned
-	VkRenderPass renderPass = VK_NULL_HANDLE;
-	VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
-	VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
-	VkDevice device;
-
-	RenderPass(VkDevice device, VkAttachmentDescription colorAttachment, VkSubpassDescription subpass) : device(device) {
-
-		// desriptors
-		VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-		uboLayoutBinding.binding = 0;
-		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		uboLayoutBinding.descriptorCount = 1;
-		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT;
-
-		VkDescriptorSetLayoutCreateInfo layoutInfo = {};
-		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.bindingCount = 1;
-		layoutInfo.pBindings = &uboLayoutBinding;
-
-		if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create descriptor set layout!");
-		}
-
-		VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 0; // Optional
-		pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
-		pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-		pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
-
-		pipelineLayoutInfo.setLayoutCount = 1;
-		pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-
-		if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create pipeline layout!");
-		}
-
-		VkSubpassDependency dependency = {};
-		dependency.dstSubpass = 0;
-		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT
-			| VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependency.srcAccessMask = 0;
-		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-
-		VkRenderPassCreateInfo renderPassInfo = {};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		renderPassInfo.attachmentCount = 1;
-		renderPassInfo.pAttachments = &colorAttachment;
-		renderPassInfo.subpassCount = 1;
-		renderPassInfo.pSubpasses = &subpass;
-		renderPassInfo.dependencyCount = 1;
-		renderPassInfo.pDependencies = &dependency;
-
-		if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create render pass!");
-		}
-
-
-	}
-
-	~RenderPass() {
-		vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-		vkDestroyRenderPass(device, renderPass, nullptr);
-		vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
-	}
-};
 
 class Buffer
 {
@@ -402,7 +329,7 @@ void runApplication(ApplicationServices& app) {
 	int yres = config.yres;
 	
 	if (config.liveReload) {
-		rebuildShaders(app.console, config);
+		rebuild_shaders(app.console, config);
 	}
 
 	ApplyEnvVarChanges();
@@ -553,6 +480,10 @@ void runApplication(ApplicationServices& app) {
 			.queue_family_index(physical.graphicsFamilyIndex);
 		
 		VulkanCommandBuffer command_buffer = command_pool.allocate_command_buffer();
+
+		BuiltinShaders builtin_shaders;
+
+		auto shader_info = builtin_shaders.get_fullscreen_triangle_vert_shader();
 
 		// hacky: disable the while after this if
 		running = false;
@@ -734,7 +665,7 @@ void runApplication(ApplicationServices& app) {
 			}
 
 			if (rebuild && liveReload) {
-				if (rebuildShaders(app.console, config)) {
+				if (rebuild_shaders(app.console, config)) {
 					resize = true;
 				}
 			}
