@@ -20,9 +20,13 @@ jobs:
     - name: Install SDK
       run: |
         choco install vulkan-sdk
+        echo VULKAN_SDK=$VULKAN_SDK
+        refreshenv
+        echo VULKAN_SDK=$VULKAN_SDK
 
     - name: Build
       run: |
+        echo VULKAN_SDK=$VULKAN_SDK
         $env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE"
         devenv vulkan.sln /build
 
