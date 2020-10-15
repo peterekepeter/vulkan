@@ -17,10 +17,15 @@ jobs:
       with:
         submodules: true
 
+    - name: Install SDK
+      run: |
+        choco install vulkan-sdk
+
     - name: Build
       run: |
         $env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE"
         devenv vulkan.sln /build
+
     - name: Publish
       run: |
         ./publish.ps1
