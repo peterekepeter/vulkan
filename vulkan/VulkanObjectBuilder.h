@@ -19,7 +19,7 @@ public:
 	VulkanShaderModule shader_module(const std::vector<char> bin) { return VulkanShaderModule(m_vk_device, bin); }
 	VulkanShaderModule shader_module(const char* bin, const size_t sz) { return VulkanShaderModule(m_vk_device, bin, sz); }
 	VulkanRenderPass::Builder render_pass() { return VulkanRenderPass::Builder(m_vk_device); }
-	VulkanDescriptorSetLayout::Builder desriptor_set_layout() { return VulkanDescriptorSetLayout::Builder(m_vk_device); }
+	VulkanDescriptorSetLayout::Builder descriptor_set_layout() { return VulkanDescriptorSetLayout::Builder(m_vk_device); }
 	VulkanPipelineLayout::Builder pipeline_layout() { return VulkanPipelineLayout::Builder(m_vk_device); }
 	VulkanGraphicsPipelineBuilder graphics_pipeline() { return VulkanGraphicsPipelineBuilder(m_vk_device); }
 	VulkanDescriptorPool::Builder descriptor_pool() { return VulkanDescriptorPool::Builder(m_vk_device); }

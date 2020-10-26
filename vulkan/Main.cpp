@@ -454,7 +454,7 @@ void runApplication(ApplicationServices& app) {
 		VulkanShaderModule vertex_shader = builder.shader_module(read_shader("vert"));
 		VulkanShaderModule fragment_shader = builder.shader_module(read_shader("frag"));
 
-		VulkanDescriptorSetLayout uniform_descriptor = builder.desriptor_set_layout()
+		VulkanDescriptorSetLayout uniform_descriptor = builder.descriptor_set_layout()
 			.add_uniform_buffer(0).with_both_vertex_fragment_stage_access();
 
 		VulkanPipelineLayout pipeline_layout = builder.pipeline_layout()
@@ -506,11 +506,11 @@ void runApplication(ApplicationServices& app) {
 			.subpass(0).writes_color_attachment(0)
 			;
 
-		VulkanDescriptorSetLayout ubo_descriptor_set = builder.desriptor_set_layout()
+		VulkanDescriptorSetLayout ubo_descriptor_set_layout = builder.descriptor_set_layout()
 			.add_uniform_buffer(0).with_both_vertex_fragment_stage_access();
 
 		VulkanPipelineLayout pipeline_layout = builder.pipeline_layout()
-			.add(ubo_descriptor_set.m_vk_descriptor_set_layout);
+			.add(ubo_descriptor_set_layout.m_vk_descriptor_set_layout);
 
 		VulkanGraphicsPipeline pipeline = builder.graphics_pipeline()
 			.no_vertex_input()
@@ -540,47 +540,21 @@ void runApplication(ApplicationServices& app) {
 		// uniform buffers
 		std::vector<Buffer> uniformBuffers;
 
-		VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
 		uniformBuffers.reserve(swap.swapChainImages.size());
 
 		for (size_t i = 0; i < swap.swapChainImages.size(); i++) {
-			uniformBuffers.emplace_back(device.device, physical.physicalDevice, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			uniformBuffers.emplace_back(device.device, physical.physicalDevice, sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		}
 
 		// command buffers
 		auto command_buffers = command_pool.allocate_command_buffers(swap.swapChainImageViews.size());
 		
-		std::vector<VkDescriptorSet> descriptorSets;
-		{
-			std::vector<VkDescriptorSetLayout> layouts(swap.swapChainImages.size(), ubo_descriptor_set.m_vk_descriptor_set_layout);
-			VkDescriptorSetAllocateInfo allocInfo = {};
-			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			allocInfo.descriptorPool = descriptor_pool.m_descriptor_pool;
-			allocInfo.descriptorSetCount = static_cast<uint32_t>(swap.swapChainImages.size());
-			allocInfo.pSetLayouts = layouts.data();
-
-			descriptorSets.resize(swap.swapChainImages.size());
-			if (vkAllocateDescriptorSets(device.device, &allocInfo, &descriptorSets[0]) != VK_SUCCESS) {
-				throw std::runtime_error("failed to allocate descriptor sets!");
-			}
-
-			for (size_t i = 0; i < swap.swapChainImages.size(); i++) {
-				VkDescriptorBufferInfo bufferInfo = {};
-				bufferInfo.buffer = uniformBuffers[i].buffer;
-				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(UniformBufferObject);
-				VkWriteDescriptorSet descriptorWrite = {};
-				descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrite.dstSet = descriptorSets[i];
-				descriptorWrite.dstBinding = 0;
-				descriptorWrite.dstArrayElement = 0;
-				descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-				descriptorWrite.descriptorCount = 1;
-				descriptorWrite.pBufferInfo = &bufferInfo;
-				descriptorWrite.pImageInfo = nullptr; // Optional
-				descriptorWrite.pTexelBufferView = nullptr; // Optional
-				vkUpdateDescriptorSets(device.device, 1, &descriptorWrite, 0, nullptr);
-			}
+		std::vector<VulkanDescriptorSet> descriptor_sets;
+		
+		for (size_t i = 0; i < swap.swapChainImages.size(); i++) {
+			descriptor_sets.push_back(descriptor_pool.allocate_descriptor_set(ubo_descriptor_set_layout));
+			descriptor_sets[i].update_to_uniform_buffer(uniformBuffers[i].buffer);
 		}
 
 		// recording 
@@ -608,7 +582,7 @@ void runApplication(ApplicationServices& app) {
 
 			vkCmdBeginRenderPass(buffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 			vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline);
-			vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout.m_vk_pipeline_layout, 0, 1, &descriptorSets[i], 0, nullptr);
+			vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout.m_vk_pipeline_layout, 0, 1, &descriptor_sets[i].m_vk_descriptor_set, 0, nullptr);
 
 		/*	for (int x = 322; x < 333; x+=16) {
 				for (int y = 322; y < 333; y += 16) {

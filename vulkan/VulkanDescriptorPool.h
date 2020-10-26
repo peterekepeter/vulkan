@@ -2,6 +2,7 @@
 #include <vulkan\vulkan_core.h>
 #include <stdexcept>
 #include <vector>
+#include "VulkanDescriptorSet.h"
 
 
 class VulkanDescriptorPool
@@ -9,6 +10,34 @@ class VulkanDescriptorPool
 public:
 	VkDevice m_vk_device;
 	VkDescriptorPool m_descriptor_pool;
+
+	VulkanDescriptorSet allocate_descriptor_set(const VulkanDescriptorSetLayout& layout)
+	{
+		return allocate_descriptor_set(layout.m_vk_descriptor_set_layout);
+	}
+
+	void free_descriptor_set(const VulkanDescriptorSet& descriptor_set)
+	{
+		free_descriptor_set(descriptor_set.m_vk_descriptor_set);
+	}
+
+	void free_descriptor_set(const VkDescriptorSet& vk_descriptor_set)
+	{
+		if (vkFreeDescriptorSets(m_vk_device, m_descriptor_pool, 1, &vk_descriptor_set) != VK_SUCCESS) {
+			throw new std::runtime_error("vkFreeDescriptorSets failed");
+		}
+	}
+
+	VulkanDescriptorSet allocate_descriptor_set(const VkDescriptorSetLayout& vk_layout)
+	{
+		VkDescriptorSetAllocateInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		info.pNext = nullptr;
+		info.descriptorPool = m_descriptor_pool;
+		info.descriptorSetCount = 1;
+		info.pSetLayouts = &vk_layout;
+		return VulkanDescriptorSet(m_vk_device, info);
+	}
 
 	class Builder
 	{
