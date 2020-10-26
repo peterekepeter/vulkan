@@ -558,48 +558,22 @@ void runApplication(ApplicationServices& app) {
 		}
 
 		// recording 
+
 		for (size_t i = 0; i < command_buffers.size(); i++) {
-			auto& buffer = command_buffers[i].m_vk_command_buffer;
-			VkCommandBufferBeginInfo beginInfo = {};
-			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-			beginInfo.pInheritanceInfo = nullptr; // Optional
+			auto& command_buffer = command_buffers[i];
 
-			if (vkBeginCommandBuffer(buffer, &beginInfo) != VK_SUCCESS) {
-				throw std::runtime_error("failed to begin recording command buffer!");
-			}
-
-			VkRenderPassBeginInfo renderPassInfo = {};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = render_pass.m_vk_render_pass;
-			renderPassInfo.framebuffer = framebuffers.swapChainFramebuffers[i];
-			renderPassInfo.renderArea.offset = { 0, 0 };
-			renderPassInfo.renderArea.extent = swap.extent;
-
-			VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-			renderPassInfo.clearValueCount = 1;
-			renderPassInfo.pClearValues = &clearColor;
-
-			vkCmdBeginRenderPass(buffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-			vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline);
-			vkCmdBindDescriptorSets(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout.m_vk_pipeline_layout, 0, 1, &descriptor_sets[i].m_vk_descriptor_set, 0, nullptr);
-
-		/*	for (int x = 322; x < 333; x+=16) {
-				for (int y = 322; y < 333; y += 16) {
-					VkViewport viewport = { x, y, 16, 16, 0, 1 };
-					vkCmdSetViewport(cmdBuffer, 0, 1, &viewport);
-					vkCmdDraw(cmdBuffer, 6000000, 1, 0, 0);
-				}
-			}*/
+			VkRect2D render_area = { 0, 0, swap.extent.width, swap.extent.height };
+			VkClearValue clear_color = { 0.0f, 0.0f, 0.0f, 1.0f };
 			VkViewport viewport = { 0, 0, swap.extent.width, swap.extent.height, 0, 1 };
-			vkCmdSetViewport(buffer, 0, 1, &viewport);
-			vkCmdDraw(buffer, 6, 1, 0, 0);
 
-			vkCmdEndRenderPass(buffer);
-
-			if (vkEndCommandBuffer(buffer) != VK_SUCCESS) {
-				throw std::runtime_error("failed to record command buffer!");
-			}
+			command_buffer.begin_recording_simultaneous()
+				.begin_render_pass(render_pass.m_vk_render_pass, framebuffers.swapChainFramebuffers[i], render_area, 1, &clear_color)
+				.bind_graphics_pipeline(pipeline)
+				.bind_graphics_descriptor_set(pipeline_layout, descriptor_sets[i])
+				.set_viewport(viewport)
+				.draw(3)
+				.end_render_pass()
+				.end_recording();
 		}
 
 		// actual rendering
