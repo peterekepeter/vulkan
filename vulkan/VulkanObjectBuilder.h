@@ -6,6 +6,7 @@
 #include "VulkanPipelineLayout.h"
 #include "VulkanDescriptorPool.h"
 #include "VulkanCommandPool.h"
+#include "VulkanFramebuffer.h"
 
 // Does not map to any vulkan concept, this is just a high-level class that 
 // makes it easier to create objects.
@@ -24,4 +25,5 @@ public:
 	VulkanGraphicsPipelineBuilder graphics_pipeline() { return VulkanGraphicsPipelineBuilder(m_vk_device); }
 	VulkanDescriptorPool::Builder descriptor_pool() { return VulkanDescriptorPool::Builder(m_vk_device); }
 	VulkanCommandPool::Builder command_pool() { return VulkanCommandPool::Builder(m_vk_device); }
+	VulkanFramebuffer::Builder framebuffer() { return VulkanFramebuffer::Builder(m_vk_device); }
 };

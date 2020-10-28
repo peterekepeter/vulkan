@@ -175,6 +175,7 @@
     <ClInclude Include="VulkanCommandPool.h" />
     <ClInclude Include="VulkanDescriptorPool.h" />
     <ClInclude Include="VulkanDescriptorSet.h" />
+    <ClInclude Include="VulkanFramebuffer.h" />
     <ClInclude Include="VulkanObjectBuilder.h" />
     <ClInclude Include="VulkanDescriptorSetLayout.h" />
     <ClInclude Include="VulkanImage.h" />

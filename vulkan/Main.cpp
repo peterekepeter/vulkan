@@ -21,6 +21,7 @@
 #include "VulkanPipelineLayout.h"
 #include "VulkanObjectBuilder.h"
 #include "BuiltinShaders.h"
+#include "VulkanFramebuffer.h"
 
 // TODO: refactor move to library
 static void make_sure_dir_exists(const std::string dirPath)
@@ -442,29 +443,32 @@ void runApplication(ApplicationServices& app) {
 
 	if (config.offline) {
 
+		auto width = 256;
+		auto height = 256;
+
 		VulkanImageMemoryAllocator allocator = VulkanImageMemoryAllocator(physical.physicalDevice, device.device);
-		VulkanImage image = VulkanImage::Builder(allocator).image_2d(256, 256).format_R32G32B32A32_SFLOAT().usage_color_attachment().usage_transfer_src();
-		VulkanImageView imageView = VulkanImageView::Builder(image);
+		VulkanImage attachment_image = VulkanImage::Builder(allocator).image_2d(width, height).format_R32G32B32A32_SFLOAT().usage_color_attachment().usage_transfer_src();
+		VulkanImageView attachment_image_view = VulkanImageView::Builder(attachment_image);
 
 		VulkanRenderPass render_pass = builder.render_pass()
-			.attachment(0).from(image).initial_layout_color_attachment().final_layout_color_attachment().store_final_color_depth()
+			.attachment(0).from(attachment_image).initial_layout_color_attachment().final_layout_color_attachment().store_final_color_depth()
 			.subpass(0).writes_color_attachment(0);
 
 		app.console.Open().Output << "Reading shader binaries.\n";
 		VulkanShaderModule vertex_shader = builder.shader_module(read_shader("vert"));
 		VulkanShaderModule fragment_shader = builder.shader_module(read_shader("frag"));
 
-		VulkanDescriptorSetLayout uniform_descriptor = builder.descriptor_set_layout()
+		VulkanDescriptorSetLayout descriptor_set_layout = builder.descriptor_set_layout()
 			.add_uniform_buffer(0).with_both_vertex_fragment_stage_access();
 
 		VulkanPipelineLayout pipeline_layout = builder.pipeline_layout()
-			.add(uniform_descriptor.m_vk_descriptor_set_layout);
+			.add(descriptor_set_layout.m_vk_descriptor_set_layout);
 
 		VulkanGraphicsPipeline pipeline = VulkanGraphicsPipelineBuilder(device.device)
 			.no_vertex_input()
 			.add_vertex_shader(vertex_shader)
 			.topology_triangles()
-			.viewport(256, 256)
+			.viewport(width, height)
 			.add_fragment_shader(fragment_shader)
 			.blend_soft_additive()
 			.set_pipeline_layot(pipeline_layout.m_vk_pipeline_layout)
@@ -483,7 +487,68 @@ void runApplication(ApplicationServices& app) {
 
 		BuiltinShaders builtin_shaders;
 
+
+		VulkanDescriptorSet ubo_descriptor_set = descriptor_pool.allocate_descriptor_set(descriptor_set_layout);
+
+		Buffer ubo_buffer(device.device, physical.physicalDevice, sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+		ubo_descriptor_set.update_to_uniform_buffer(ubo_buffer.buffer);
+
+		VulkanFramebuffer framebuffer = builder.framebuffer().render_pass(render_pass).size(width, height).attachment(attachment_image_view);
+
+
+		VkRect2D render_area = { 0, 0, width, height };
+		VkClearValue clear_color = { 0.0f, 0.0f, 0.0f, 1.0f };
+		VkViewport viewport = { 0, 0, width, height, 0, 1 };
+
+		command_buffer.begin_recording_one_shot();
+
+		VkImageMemoryBarrier image_barrier = {};
+		image_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		image_barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		image_barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		image_barrier.image = attachment_image.m_vk_image;
+		image_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		image_barrier.subresourceRange.baseMipLevel = 0;
+		image_barrier.subresourceRange.levelCount = 1;
+		image_barrier.subresourceRange.baseArrayLayer = 0;
+		image_barrier.subresourceRange.layerCount = 1;
+
+
+		
+		VkPipelineStageFlags source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		VkPipelineStageFlags destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		vkCmdPipelineBarrier(command_buffer.m_vk_command_buffer, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
+
+		command_buffer
+			.begin_render_pass(render_pass.m_vk_render_pass, framebuffer.m_vk_framebuffer, render_area, 1, &clear_color)
+			.bind_graphics_pipeline(pipeline)
+			.bind_graphics_descriptor_set(pipeline_layout, ubo_descriptor_set)
+			.set_viewport(viewport)
+			.draw(3)
+			.end_render_pass()
+			.end_recording();
+
 		auto shader_info = builtin_shaders.get_fullscreen_triangle_vert_shader();
+
+		UniformBufferObject ubo;
+		ubo.width = static_cast<float>(width);
+		ubo.height = static_cast<float>(height);
+		ubo.time = 0.0f;
+		ubo._reserved = 0.0f;
+
+		void* data;
+		vkMapMemory(device.device, ubo_buffer.bufferMemory, 0, sizeof(ubo), 0, &data);
+		memcpy(data, &ubo, sizeof(ubo));
+		vkUnmapMemory(device.device, ubo_buffer.bufferMemory);
+
+		VkSubmitInfo submit_info = {};
+		submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submit_info.commandBufferCount = 1;
+		submit_info.pCommandBuffers = &command_buffer.m_vk_command_buffer;
+		vkQueueSubmit(device.graphicsQueue, 1, &submit_info, VK_NULL_HANDLE);
+
+		vkDeviceWaitIdle(device.device);
 
 		// hacky: disable the while after this if
 		running = false;
