@@ -19,7 +19,7 @@
     <Filter Include="Source Files\Vulkan">
       <UniqueIdentifier>{0860d210-8fc9-4cb9-ac2a-342f5aa6d89e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Builtin Shaders">
+    <Filter Include="Resource Files\Builtin Shaders">
       <UniqueIdentifier>{15e0d441-5813-4ab3-81e5-27756fb6fc17}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -57,9 +57,6 @@
     <ClInclude Include="VulkanSwapChain.h">
       <Filter>Header Files\Vulkan</Filter>
     </ClInclude>
-    <ClInclude Include="VulkanShaderModule.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
     <ClInclude Include="VulkanGraphicsPipeline.h">
       <Filter>Header Files\Vulkan</Filter>
     </ClInclude>
@@ -87,9 +84,6 @@
     <ClInclude Include="VulkanImageView.h">
       <Filter>Header Files\Vulkan</Filter>
     </ClInclude>
-    <ClInclude Include="VulkanRenderPass.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
     <ClInclude Include="CommonImageFormats.h">
       <Filter>Header Files\Vulkan</Filter>
     </ClInclude>
@@ -111,9 +105,6 @@
     <ClInclude Include="VulkanCommandBuffer.h">
       <Filter>Header Files\Vulkan</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="BuiltinShaders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -121,6 +112,18 @@
       <Filter>Header Files\Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="VulkanFramebuffer.h">
+      <Filter>Header Files\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanShaderModule.h">
+      <Filter>Header Files\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanRenderPass.h">
+      <Filter>Header Files\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanSampler.h">
       <Filter>Header Files\Vulkan</Filter>
     </ClInclude>
   </ItemGroup>
@@ -175,7 +178,10 @@
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="fullscreen-triangle.vert">
-      <Filter>Builtin Shaders</Filter>
+      <Filter>Resource Files\Builtin Shaders</Filter>
+    </CustomBuild>
+    <CustomBuild Include="sdr-output.frag">
+      <Filter>Resource Files\Builtin Shaders</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

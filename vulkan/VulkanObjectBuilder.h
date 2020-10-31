@@ -7,6 +7,7 @@
 #include "VulkanDescriptorPool.h"
 #include "VulkanCommandPool.h"
 #include "VulkanFramebuffer.h"
+#include "VulkanSampler.h"
 
 // Does not map to any vulkan concept, this is just a high-level class that 
 // makes it easier to create objects.
@@ -26,4 +27,5 @@ public:
 	VulkanDescriptorPool::Builder descriptor_pool() { return VulkanDescriptorPool::Builder(m_vk_device); }
 	VulkanCommandPool::Builder command_pool() { return VulkanCommandPool::Builder(m_vk_device); }
 	VulkanFramebuffer::Builder framebuffer() { return VulkanFramebuffer::Builder(m_vk_device); }
+	VulkanSampler::Builder sampler() { return VulkanSampler::Builder(m_vk_device); }
 };

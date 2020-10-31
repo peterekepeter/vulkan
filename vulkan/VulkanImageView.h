@@ -3,11 +3,11 @@
 class VulkanImageView
 {
 public:
-	VkDevice device;
-	VkImageView vkImageViewHandle;
+	VkDevice m_vk_device;
+	VkImageView m_vk_image_view;
 
-	VulkanImageView(VkDevice device, const VkImageViewCreateInfo& createInfo) : device(device) {
-		switch (vkCreateImageView(device, &createInfo, nullptr, &vkImageViewHandle)) {
+	VulkanImageView(VkDevice device, const VkImageViewCreateInfo& createInfo) : m_vk_device(device) {
+		switch (vkCreateImageView(device, &createInfo, nullptr, &m_vk_image_view)) {
 		case VK_SUCCESS:
 			break;
 		case VK_ERROR_OUT_OF_HOST_MEMORY:
@@ -20,31 +20,31 @@ public:
 	}
 
 	VulkanImageView() {
-		device = VK_NULL_HANDLE;
-		vkImageViewHandle = VK_NULL_HANDLE;
+		m_vk_device = VK_NULL_HANDLE;
+		m_vk_image_view = VK_NULL_HANDLE;
 	}
 
 	VulkanImageView(VulkanImageView&& other) noexcept {
-		device = other.device;
-		vkImageViewHandle = other.vkImageViewHandle;
-		other.vkImageViewHandle = VK_NULL_HANDLE;
+		m_vk_device = other.m_vk_device;
+		m_vk_image_view = other.m_vk_image_view;
+		other.m_vk_image_view = VK_NULL_HANDLE;
 	}
 
 	VulkanImageView& operator =(VulkanImageView&& other) {
-		if (vkImageViewHandle != VK_NULL_HANDLE) {
-			vkDestroyImageView(device, vkImageViewHandle, nullptr);
+		if (m_vk_image_view != VK_NULL_HANDLE) {
+			vkDestroyImageView(m_vk_device, m_vk_image_view, nullptr);
 		}
-		device = other.device;
-		vkImageViewHandle = other.vkImageViewHandle;
-		other.vkImageViewHandle = VK_NULL_HANDLE;
+		m_vk_device = other.m_vk_device;
+		m_vk_image_view = other.m_vk_image_view;
+		other.m_vk_image_view = VK_NULL_HANDLE;
 	};
 
 	VulkanImageView(const VulkanImageView& other) = delete;
 	VulkanImageView& operator =(const VulkanImageView& other) = delete;
 
 	~VulkanImageView() {
-		if (vkImageViewHandle != VK_NULL_HANDLE) {
-			vkDestroyImageView(device, vkImageViewHandle, nullptr);
+		if (m_vk_image_view != VK_NULL_HANDLE) {
+			vkDestroyImageView(m_vk_device, m_vk_image_view, nullptr);
 		}
 	}
 

@@ -15,6 +15,7 @@ public:
 	BuiltinShaders();
 
 	const BinaryData& get_fullscreen_triangle_vert_shader();
+	const BinaryData& get_sdr_output_frag_shader();
 
 private:
 	HINSTANCE m_h_instance;

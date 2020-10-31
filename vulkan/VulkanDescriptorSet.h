@@ -1,4 +1,6 @@
 #pragma once
+#include "VulkanSampler.h"
+#include "VulkanImageView.h"
 
 class VulkanDescriptorSet
 {
@@ -10,10 +12,14 @@ public:
 		: m_vk_device(nullptr)
 		, m_vk_descriptor_set(0) 
 	{
-	
+		
 	}
 
-	void update_to_uniform_buffer(VkBuffer buffer, VkDeviceSize offset = 0, VkDeviceSize range = VK_WHOLE_SIZE) {
+	VulkanDescriptorSet& write_uniform_buffer(
+		uint32_t binding, 
+		VkBuffer buffer, 
+		VkDeviceSize offset = 0, 
+		VkDeviceSize range = VK_WHOLE_SIZE) {
 		VkDescriptorBufferInfo buffer_info = {};
 		buffer_info.buffer = buffer;
 		buffer_info.offset = offset;
@@ -21,7 +27,7 @@ public:
 		VkWriteDescriptorSet write = {};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		write.dstSet = m_vk_descriptor_set;
-		write.dstBinding = 0;
+		write.dstBinding = binding;
 		write.dstArrayElement = 0;
 		write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		write.descriptorCount = 1;
@@ -29,6 +35,44 @@ public:
 		write.pImageInfo = nullptr; // Optional
 		write.pTexelBufferView = nullptr; // Optional
 		vkUpdateDescriptorSets(m_vk_device, 1, &write, 0, nullptr);
+		return *this;
+	}
+
+	VulkanDescriptorSet& write_image_sampler(
+		uint32_t binding,
+		const VulkanSampler& sampler,
+		const VulkanImageView& image_view,
+		VkImageLayout vk_image_layout = VkImageLayout::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+	{
+		return write_image_sampler(
+			binding,
+			sampler.m_vk_sampler,
+			image_view.m_vk_image_view,
+			vk_image_layout
+		);
+	}
+	VulkanDescriptorSet& write_image_sampler(
+		uint32_t binding, 
+		VkSampler vk_sampler, 
+		VkImageView vk_image_view, 
+		VkImageLayout vk_image_layout = VkImageLayout::VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+	{
+		VkDescriptorImageInfo image_info = {};
+		image_info.sampler = vk_sampler;
+		image_info.imageView = vk_image_view;
+		image_info.imageLayout = vk_image_layout;
+		VkWriteDescriptorSet write = {};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write.dstSet = m_vk_descriptor_set;
+		write.dstBinding = binding;
+		write.dstArrayElement = 0;
+		write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		write.descriptorCount = 1;
+		write.pBufferInfo = nullptr;
+		write.pImageInfo = &image_info; // Optional
+		write.pTexelBufferView = nullptr; // Optional
+		vkUpdateDescriptorSets(m_vk_device, 1, &write, 0, nullptr);
+		return *this;
 	}
 
 	VulkanDescriptorSet(VkDevice vk_device, VkDescriptorSetAllocateInfo& info) 

@@ -82,7 +82,7 @@ public:
 
 		Builder& imageless() { return set_flags(VK_FRAMEBUFFER_CREATE_IMAGELESS_BIT); }
 		Builder& size(uint32_t width, uint32_t height) { return set_width(width).set_height(height); }
-		Builder& add_attachment(VulkanImageView& image_view){ return add_attachment(image_view.vkImageViewHandle); }
+		Builder& add_attachment(VulkanImageView& image_view){ return add_attachment(image_view.m_vk_image_view); }
 		Builder& set_render_pass(VulkanRenderPass& render_pass) { return set_render_pass(render_pass.m_vk_render_pass); }
 
 		Builder& set_width(uint32_t width) { m_info.width = width; return *this; }

@@ -13,6 +13,11 @@ const BuiltinShaders::BinaryData& BuiltinShaders::get_fullscreen_triangle_vert_s
     return get_cached_resource(FULLSCREEN_TRIANGLE_VERT_RESOURCE);
 }
 
+const BuiltinShaders::BinaryData& BuiltinShaders::get_sdr_output_frag_shader()
+{
+    return get_cached_resource(SDR_OUTPUT_FRAG_RESOURCE);
+}
+
 const BuiltinShaders::BinaryData& BuiltinShaders::get_cached_resource(int id)
 {
     using std::get;

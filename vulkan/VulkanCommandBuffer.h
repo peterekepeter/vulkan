@@ -1,5 +1,7 @@
 #pragma once
 #include <vulkan/vulkan_core.h>
+#include "VulkanRenderPass.h"
+#include "VulkanFramebuffer.h"
 
 class VulkanCommandBuffer
 {
@@ -52,6 +54,21 @@ public:
 		default:
 			throw std::runtime_error("vkEndCommandBuffer failed: undefined behaviour");
 		}
+	}
+
+	VulkanCommandBuffer& begin_render_pass(
+		VulkanRenderPass& render_pass,
+		VulkanFramebuffer& frame_buffer,
+		const VkRect2D& render_area,
+		uint32_t clear_value_count = 0,
+		VkClearValue* clear_values = nullptr)
+	{
+		return begin_render_pass(
+			render_pass.m_vk_render_pass, 
+			frame_buffer.m_vk_framebuffer, 
+			render_area, 
+			clear_value_count, 
+			clear_values);
 	}
 
 	VulkanCommandBuffer& begin_render_pass(

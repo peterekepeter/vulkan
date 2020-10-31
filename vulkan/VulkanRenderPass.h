@@ -110,6 +110,7 @@ public:
 			Attachment& stencil_op(VkAttachmentLoadOp loadOp, VkAttachmentStoreOp storeOp) { return set_stencil_load_op(loadOp).set_stencil_store_op(storeOp); }
 			Attachment& initial_layout_color_attachment() { return set_initial_layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL); }
 			Attachment& final_layout_color_attachment() { return set_final_layout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL); }
+			Attachment& final_layout_shader_read_only_optimal () { return set_final_layout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL); }
 			Attachment& final_layout_present_src() { return set_final_layout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR); }
 			Attachment& final_layout_transfer_src() { return set_final_layout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL); }
 			Attachment& final_layout_transfer_dst() { return set_final_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL); }

@@ -3,3 +3,4 @@
 #include "resource.h"
 
 FULLSCREEN_TRIANGLE_VERT_RESOURCE RCDATA "fullscreen-triangle.spv"
+SDR_OUTPUT_FRAG_RESOURCE RCDATA "sdr-output.spv"

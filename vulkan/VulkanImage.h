@@ -105,6 +105,7 @@ public:
 
 		// commonly used and supported RGBA formats
 
+		Builder& format_R8G8B8A8_UINT() { return set_format(CommonImageFormats::R8G8B8A8_UINT); }
 		Builder& format_R8G8B8A8_UNORM() { return set_format(CommonImageFormats::R8G8B8A8_UNORM); }
 		Builder& format_R8G8B8A8_SRGB() { return set_format(CommonImageFormats::R8G8B8A8_SRGB); }
 		Builder& format_R16G16B16A16_SFLOAT() { return set_format(CommonImageFormats::R16G16B16A16_SFLOAT); }

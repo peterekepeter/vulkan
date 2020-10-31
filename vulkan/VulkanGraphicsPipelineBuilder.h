@@ -176,6 +176,7 @@ inline VulkanGraphicsPipelineBuilder::VulkanGraphicsPipelineBuilder(VkDevice vkD
 	m_color_blend_state.blendConstants[1] = 0.0f;
 	m_color_blend_state.blendConstants[2] = 0.0f;
 	m_color_blend_state.blendConstants[3] = 0.0f;
+	m_color_blend_attachment = {};
 	m_color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 	m_color_blend_attachment.blendEnable = VK_FALSE;
 	m_subpass_index = 0;
