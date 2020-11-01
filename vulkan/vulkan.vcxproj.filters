@@ -22,6 +22,9 @@
     <Filter Include="Resource Files\Builtin Shaders">
       <UniqueIdentifier>{15e0d441-5813-4ab3-81e5-27756fb6fc17}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Vendor">
+      <UniqueIdentifier>{0970e065-ebe0-4e70-8442-8289e97c1ba0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -125,6 +128,9 @@
     </ClInclude>
     <ClInclude Include="VulkanSampler.h">
       <Filter>Header Files\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="renderdoc_app.h">
+      <Filter>Header Files\Vendor</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

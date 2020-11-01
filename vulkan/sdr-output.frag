@@ -14,5 +14,5 @@ layout(set = 0, binding = 1) uniform sampler2D texSampler;
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    outColor = texture(texSampler, gl_FragCoord.xy);
+    outColor = texture(texSampler, gl_FragCoord.xy) / ubo.image_count;
 }

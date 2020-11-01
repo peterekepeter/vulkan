@@ -15,6 +15,7 @@ struct Configuration
 	int device_index = -1;
 	std::wstring windowTitle;
 	std::string musicFile;
+	std::string outFile;
 	std::unique_ptr<std::string> vulkan_sdk = nullptr;
 	bool musicStream = true;
 	bool musicEnabled = true;

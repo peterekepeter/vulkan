@@ -168,6 +168,7 @@
     <ClInclude Include="CommonImageFormats.h" />
     <ClInclude Include="Configuration.hpp" />
     <ClInclude Include="Playback.hpp" />
+    <ClInclude Include="renderdoc_app.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />

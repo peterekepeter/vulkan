@@ -53,6 +53,7 @@ void ConfigurationBuilder::ReadConsoleConfig()
 		.Option("-y", "--yres", config.yres)
 		.Option("-o", "--offline", config.offline)
 		.Option("-d", "--device-index", config.device_index)
+		.Option("--outfile", config.outFile)
 		.Parse(argv, argc);
 
 	config.fullscreen = !windowed;

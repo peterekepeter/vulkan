@@ -31,7 +31,7 @@ public:
 
 	void BindImageMemory(VkImage image, VulkanMemory& memory)
 	{
-		vkBindImageMemory(memory.vkDeviceHandle, image, memory.vkMemoryHandle, VkDeviceSize(0));
+		vkBindImageMemory(memory.m_vk_device, image, memory.m_vk_memory, VkDeviceSize(0));
 	}
 
 };

@@ -120,6 +120,130 @@ public:
 		return *this;
 	}
 
+	VulkanCommandBuffer& clear_attachment(uint32_t attachment, VkImageAspectFlags aspect_mask, const VkClearValue& clear_value, uint32_t width, uint32_t height, int32_t x = 0, int32_t y = 0) {
+		VkClearAttachment clear;
+		clear.aspectMask = aspect_mask;
+		clear.clearValue = clear_value;
+		clear.colorAttachment = attachment;
+		VkClearRect rect;
+		rect.baseArrayLayer = 0;
+		rect.layerCount = 1;
+		rect.rect.extent.width = width;
+		rect.rect.extent.height = height;
+		rect.rect.offset.x = x;
+		rect.rect.offset.y = y;
+		vkCmdClearAttachments(m_vk_command_buffer, 1, &clear, 1, &rect);
+		return *this;
+	}
+
+	VulkanCommandBuffer& clear_color_image(VkImage image, VkImageLayout image_layout, const VkClearColorValue& clear_color)
+	{
+		VkImageSubresourceRange range;
+		range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		range.baseArrayLayer = 0;
+		range.baseMipLevel = 0;
+		range.layerCount = 1;
+		range.levelCount = 1;
+		vkCmdClearColorImage(m_vk_command_buffer, image, image_layout, &clear_color, 1, &range);
+		return *this;
+	}
+
+	VulkanCommandBuffer& copy_image(VkImage src, VkImageLayout src_layout, VkImage dst, VkImageLayout dst_layout, 
+		int32_t width, int32_t height, int32_t src_x = 0, int32_t src_y = 0, int32_t dst_x = 0, int32_t dst_y = 0) {
+		VkImageCopy copy;
+		copy = {};
+		copy.srcOffset.x = src_x;
+		copy.srcOffset.y = src_y;
+		copy.dstOffset.x = dst_x;
+		copy.dstOffset.y = dst_y;
+		copy.extent.width = width;
+		copy.extent.height = height;
+		copy.extent.depth = 1;
+		copy.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		copy.srcSubresource.baseArrayLayer = 0;
+		copy.srcSubresource.layerCount = 1;
+		copy.srcSubresource.mipLevel = 0;
+		copy.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		copy.dstSubresource.baseArrayLayer = 0;
+		copy.dstSubresource.layerCount = 1;
+		copy.dstSubresource.mipLevel = 0;
+
+		vkCmdCopyImage(m_vk_command_buffer, src, src_layout, dst, dst_layout, 1, &copy);
+		return *this;
+	}
+
+	class Barrier
+	{
+	public:
+		VkPipelineStageFlags m_source_mask;
+		VkPipelineStageFlags m_dest_mask; 
+		VkDependencyFlagBits m_dependency_flags;
+		VulkanCommandBuffer& m_parent;
+
+		std::vector<VkMemoryBarrier> m_memory_barriers;
+		std::vector<VkBufferMemoryBarrier> m_buffer_barriers;
+		std::vector<VkImageMemoryBarrier> m_image_memory_barriers;
+
+		Barrier(
+			VulkanCommandBuffer& parent,
+			VkPipelineStageFlags src_mask, 
+			VkPipelineStageFlags dest_mask, 
+			VkDependencyFlagBits dependency_flags) 
+			: m_parent(parent)
+			, m_source_mask(src_mask)
+			, m_dest_mask(dest_mask)
+			, m_dependency_flags(dependency_flags)
+		{
+
+		}
+
+		Barrier& image(VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t srcQueueFamilyIndex, uint32_t dstQueueFamilyIndex, VkImage image, 
+			VkImageAspectFlags aspectMask, uint32_t baseMipLevel, uint32_t levelCount, uint32_t baseArrayLayer, uint32_t layerCount) 
+		{
+			m_image_memory_barriers.emplace_back();
+			auto& image_barrier = m_image_memory_barriers.back();
+			image_barrier = {};
+			image_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+			image_barrier.srcAccessMask = srcAccessMask;
+			image_barrier.dstAccessMask = dstAccessMask;
+			image_barrier.oldLayout = oldLayout;
+			image_barrier.newLayout = newLayout;
+			image_barrier.srcQueueFamilyIndex = srcQueueFamilyIndex;
+			image_barrier.dstQueueFamilyIndex = dstQueueFamilyIndex;
+			image_barrier.image = image;
+			image_barrier.subresourceRange.aspectMask = aspectMask;
+			image_barrier.subresourceRange.baseMipLevel = baseMipLevel;
+			image_barrier.subresourceRange.levelCount = levelCount;
+			image_barrier.subresourceRange.baseArrayLayer = baseArrayLayer;
+			image_barrier.subresourceRange.layerCount = layerCount;
+			return *this;
+		}
+
+		VulkanCommandBuffer& end_barrier() {
+			vkCmdPipelineBarrier(
+				m_parent.m_vk_command_buffer, 
+				m_source_mask, 
+				m_dest_mask, 
+				m_dependency_flags,
+				m_memory_barriers.size(),
+				m_memory_barriers.data(),
+				m_buffer_barriers.size(),
+				m_buffer_barriers.data(),
+				m_image_memory_barriers.size(),
+				m_image_memory_barriers.data()
+			);
+			return m_parent;
+		}
+	};
+
+	Barrier begin_barrier(
+		VkPipelineStageFlags src_mask, 
+		VkPipelineStageFlags dest_mask, 
+		VkDependencyFlagBits dependency_flags)
+	{
+		return Barrier(*this, src_mask, dest_mask, dependency_flags);
+	}
+
 	VulkanCommandBuffer& draw(
 		uint32_t vertex_count = 3, 
 		uint32_t instance_count = 1, 

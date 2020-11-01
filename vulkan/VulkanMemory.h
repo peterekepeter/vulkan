@@ -3,15 +3,15 @@
 class VulkanMemory
 {
 public:
-	VkDevice vkDeviceHandle;
-	VkDeviceMemory vkMemoryHandle;
+	VkDevice m_vk_device;
+	VkDeviceMemory m_vk_memory;
 
-	VulkanMemory(VkDevice device, uint64_t size, VulkanPhysicalMemory::TypeIndex memory_type) : vkDeviceHandle(device) {
+	VulkanMemory(VkDevice device, uint64_t size, VulkanPhysicalMemory::TypeIndex memory_type) : m_vk_device(device) {
 		VkMemoryAllocateInfo allocateInfo = {};
 		allocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocateInfo.allocationSize = size;
 		allocateInfo.memoryTypeIndex = memory_type.index;
-		switch (vkAllocateMemory(device, &allocateInfo, nullptr, &vkMemoryHandle)) {
+		switch (vkAllocateMemory(device, &allocateInfo, nullptr, &m_vk_memory)) {
 		case VK_SUCCESS:
 			break;
 		case VK_ERROR_OUT_OF_HOST_MEMORY:
@@ -23,22 +23,22 @@ public:
 		}
 	}
 
-	VulkanMemory() : vkDeviceHandle(VK_NULL_HANDLE), vkMemoryHandle(VK_NULL_HANDLE) { }
+	VulkanMemory() : m_vk_device(VK_NULL_HANDLE), m_vk_memory(VK_NULL_HANDLE) { }
 
 	VulkanMemory(VulkanMemory&& other) noexcept {
-		vkDeviceHandle = other.vkDeviceHandle;
-		vkMemoryHandle = other.vkMemoryHandle;
-		other.vkMemoryHandle = VK_NULL_HANDLE;
+		m_vk_device = other.m_vk_device;
+		m_vk_memory = other.m_vk_memory;
+		other.m_vk_memory = VK_NULL_HANDLE;
 	}
 
 	VulkanMemory& operator =(VulkanMemory&& other) noexcept {
-		if (vkMemoryHandle != VK_NULL_HANDLE)
+		if (m_vk_memory != VK_NULL_HANDLE)
 		{
-			vkFreeMemory(vkDeviceHandle, vkMemoryHandle, nullptr);
+			vkFreeMemory(m_vk_device, m_vk_memory, nullptr);
 		}
-		vkDeviceHandle = other.vkDeviceHandle;
-		vkMemoryHandle = other.vkMemoryHandle;
-		other.vkMemoryHandle = VK_NULL_HANDLE;
+		m_vk_device = other.m_vk_device;
+		m_vk_memory = other.m_vk_memory;
+		other.m_vk_memory = VK_NULL_HANDLE;
 		return *this;
 	}
 
@@ -46,10 +46,10 @@ public:
 	VulkanMemory& operator =(const VulkanMemory&) = delete;
 
 	~VulkanMemory() {
-		if (vkMemoryHandle != VK_NULL_HANDLE)
+		if (m_vk_memory != VK_NULL_HANDLE)
 		{
-			vkFreeMemory(vkDeviceHandle, vkMemoryHandle, nullptr);
-			vkMemoryHandle = VK_NULL_HANDLE;
+			vkFreeMemory(m_vk_device, m_vk_memory, nullptr);
+			m_vk_memory = VK_NULL_HANDLE;
 		}
 	}
 };

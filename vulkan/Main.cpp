@@ -23,6 +23,25 @@
 #include "BuiltinShaders.h"
 #include "VulkanFramebuffer.h"
 
+#ifndef DEBUG
+#include "renderdoc_app.h"
+RENDERDOC_API_1_1_2* rdoc_api = NULL;
+#define DEBUG_FRAME_CAPTURE_INIT if (HMODULE mod = GetModuleHandleA("renderdoc.dll"))\
+{\
+	pRENDERDOC_GetAPI RENDERDOC_GetAPI =\
+		(pRENDERDOC_GetAPI)GetProcAddress(mod, "RENDERDOC_GetAPI");\
+	int ret = RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_1_2, (void**)&rdoc_api);\
+	if(ret != 1) throw std::runtime_error("oops!");\
+}
+#define DEBUG_FRAME_CAPTURE_START if(rdoc_api) rdoc_api->StartFrameCapture(NULL, NULL);
+#define DEBUG_FRAME_CAPTURE_END if(rdoc_api) rdoc_api->EndFrameCapture(NULL, NULL);
+#else // ! DEBUG
+#define DEBUG_FRAME_CAPTURE_INIT
+#define DEBUG_START_FRAME_CAPTURE
+#define DEBUG_END_FRAME_CAPTURE
+#endif
+
+
 // TODO: refactor move to library
 static void make_sure_dir_exists(const std::string dirPath)
 {
@@ -447,9 +466,8 @@ void runApplication(ApplicationServices& app) {
 	VulkanObjectBuilder builder(device);
 
 	if (config.offline) {
-
-		auto width = 256;
-		auto height = 256;
+		DEBUG_FRAME_CAPTURE_INIT;
+		DEBUG_FRAME_CAPTURE_START;
 
 		VulkanImageMemoryAllocator allocator = VulkanImageMemoryAllocator(physical.physicalDevice, device.device);
 
@@ -459,6 +477,8 @@ void runApplication(ApplicationServices& app) {
 			.format_R32G32B32A32_SFLOAT()
 			.usage_color_attachment()
 			.usage_sampled();
+
+		VulkanImageView accumulator_image_view = VulkanImageView::Builder(accumulator_image);
 
 		// image used as buffer to output SDR content
 		VulkanImage render_output_image = VulkanImage::Builder(allocator)
@@ -474,11 +494,10 @@ void runApplication(ApplicationServices& app) {
 			.usage_transfer_dst()
 			.host_visible_and_coherent();
 
-		VulkanImageView accumulator_image_view = VulkanImageView::Builder(accumulator_image);
-		VulkanImageView render_output_image_view = VulkanImageView::Builder(accumulator_image);
+		VulkanImageView render_output_image_view = VulkanImageView::Builder(render_output_image);
 
 		VulkanRenderPass render_pass_accumulate = builder.render_pass()
-			.attachment(0).from(accumulator_image).initial_layout_color_attachment().final_layout_shader_read_only_optimal().store_final_color_depth()
+			.attachment(0).from(accumulator_image).initial_layout_color_attachment().final_layout_color_attachment().load_initial_color_depth().store_final_color_depth()
 			.subpass(0).writes_color_attachment(0);
 
 		VulkanRenderPass render_pass_output = builder.render_pass()
@@ -492,7 +511,7 @@ void runApplication(ApplicationServices& app) {
 		VulkanDescriptorSetLayout descriptor_set_layout = builder.descriptor_set_layout()
 			.add_uniform_buffer(0).with_both_vertex_fragment_stage_access();
 
-		VulkanPipelineLayout pipeline_layout = builder.pipeline_layout()
+		VulkanPipelineLayout main_pipeline_layout = builder.pipeline_layout()
 			.add(descriptor_set_layout.m_vk_descriptor_set_layout);
 
 
@@ -503,7 +522,7 @@ void runApplication(ApplicationServices& app) {
 			.viewport(width, height)
 			.add_fragment_shader(fragment_shader)
 			.blend_additive()
-			.set_pipeline_layot(pipeline_layout.m_vk_pipeline_layout)
+			.set_pipeline_layot(main_pipeline_layout.m_vk_pipeline_layout)
 			.set_render_pass(render_pass_accumulate.m_vk_render_pass)
 			.set_subpass_index(0);
 
@@ -543,64 +562,39 @@ void runApplication(ApplicationServices& app) {
 		VulkanCommandBuffer main_cmd_buffer = command_pool.allocate_command_buffer();
 
 
-		VulkanDescriptorSet ubo_descriptor_set = descriptor_pool.allocate_descriptor_set(descriptor_set_layout);
+		VulkanDescriptorSet main_ubo_descriptor_set = descriptor_pool.allocate_descriptor_set(descriptor_set_layout);
 
 		Buffer ubo_buffer(device.device, physical.physicalDevice, sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-		ubo_descriptor_set.write_uniform_buffer(0, ubo_buffer.buffer);
+		main_ubo_descriptor_set.write_uniform_buffer(0, ubo_buffer.buffer);
 
 		VulkanFramebuffer accumulator_framebuffer = builder.framebuffer().render_pass(render_pass_accumulate).size(width, height).attachment(accumulator_image_view);
 
 		VkRect2D render_area = { 0, 0, width, height };
 		VkClearValue clear_color = { 0.0f, 0.0f, 0.0f, 1.0f };
+		VkClearColorValue clear_color_value = { 0.0f, 0.0f, 0.0f, 1.0f };
 		VkViewport viewport = { 0, 0, width, height, 0, 1 };
 
-		main_cmd_buffer.begin_recording();
+		auto init_command_buffer = command_pool.allocate_command_buffer();
 
-		VkImageMemoryBarrier image_barrier = {};
-		image_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		image_barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		image_barrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		image_barrier.image = accumulator_image.m_vk_image;
-		image_barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		image_barrier.subresourceRange.baseMipLevel = 0;
-		image_barrier.subresourceRange.levelCount = 1;
-		image_barrier.subresourceRange.baseArrayLayer = 0;
-		image_barrier.subresourceRange.layerCount = 1;
-
-		VkPipelineStageFlags source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		VkPipelineStageFlags destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		vkCmdPipelineBarrier(main_cmd_buffer.m_vk_command_buffer, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
-
-		main_cmd_buffer
-			.begin_render_pass(render_pass_accumulate.m_vk_render_pass, accumulator_framebuffer.m_vk_framebuffer, render_area, 1, &clear_color)
-			.bind_graphics_pipeline(main_pipeline)
-			.bind_graphics_descriptor_set(pipeline_layout, ubo_descriptor_set)
-			.draw(3)
+		init_command_buffer
+			.begin_recording()
+			.begin_barrier(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, (VkDependencyFlagBits)0)
+			.image(0, 0, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, accumulator_image.m_vk_image, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1)
+			.end_barrier()
+			.begin_render_pass(render_pass_accumulate.m_vk_render_pass, accumulator_framebuffer.m_vk_framebuffer, render_area, 0, nullptr)
+			.clear_attachment(0, VK_IMAGE_ASPECT_COLOR_BIT, clear_color, width, height)
 			.end_render_pass()
 			.end_recording();
 
-		for (int i = 0; i < 10; i++)
-		{
-			UniformBufferObject ubo;
-			ubo.width = static_cast<float>(width);
-			ubo.height = static_cast<float>(height);
-			ubo.time = 0.0f;
-			ubo._reserved = 0.0f;
-
-			void* data;
-			vkMapMemory(device.device, ubo_buffer.bufferMemory, 0, sizeof(ubo), 0, &data);
-			memcpy(data, &ubo, sizeof(ubo));
-			vkUnmapMemory(device.device, ubo_buffer.bufferMemory);
-
-			VkSubmitInfo submit_info = {};
-			submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-			submit_info.commandBufferCount = 1;
-			submit_info.pCommandBuffers = &main_cmd_buffer.m_vk_command_buffer;
-			vkQueueSubmit(device.graphicsQueue, 1, &submit_info, VK_NULL_HANDLE);
-
-			vkDeviceWaitIdle(device.device);
-		}
+		main_cmd_buffer
+			.begin_recording()
+			.begin_render_pass(render_pass_accumulate.m_vk_render_pass, accumulator_framebuffer.m_vk_framebuffer, render_area, 0, nullptr)
+			.bind_graphics_pipeline(main_pipeline)
+			.bind_graphics_descriptor_set(main_pipeline_layout, main_ubo_descriptor_set)
+			.draw(3)
+			.end_render_pass()
+			.end_recording();
 
 		VulkanDescriptorSet output_descriptor_set = descriptor_pool.allocate_descriptor_set(output_descriptor_set_layout);
 		Buffer output_ubo_buffer(device.device, physical.physicalDevice, sizeof(OutputUniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -609,37 +603,107 @@ void runApplication(ApplicationServices& app) {
 
 		output_descriptor_set
 			.write_uniform_buffer(0, output_ubo_buffer.buffer)
-			.write_image_sampler(1, framebuffer_sampler, render_output_image_view);
+			.write_image_sampler(1, framebuffer_sampler, accumulator_image_view);
 
 		auto output_cmd_buffer = command_pool.allocate_command_buffer();
 
 		VulkanFramebuffer output_framebuffer = builder.framebuffer()
 			.render_pass(render_pass_output).size(width, height).attachment(render_output_image_view);
 
-		output_cmd_buffer
+		output_cmd_buffer.begin_recording()
+			.begin_barrier(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, (VkDependencyFlagBits)0)
+			.image(0, 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, accumulator_image.m_vk_image, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1)
+			.image(0, 0, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, render_output_image.m_vk_image, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1)
+			.end_barrier()
 			.begin_render_pass(render_pass_output, output_framebuffer, render_area, 1, &clear_color)
 			.bind_graphics_pipeline(sdr_output_pipeline)
-			.bind_graphics_descriptor_set(pipeline_layout, ubo_descriptor_set)
+			.bind_graphics_descriptor_set(sdr_output_pipeline_layout, output_descriptor_set)
 			.draw(3)
 			.end_render_pass()
+			.begin_barrier(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, (VkDependencyFlagBits)0)
+			.image(0, 0, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, host_visible_image.m_vk_image, VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1)
+			.end_barrier()
+			.copy_image(render_output_image.m_vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, host_visible_image.m_vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, width, height)
 			.end_recording();
 
-		{
-			OutputUniformBufferObject ubo;
-			ubo.image_count = 1.0f;
+		int sample_count = 10;
+		int fps = 60;
+		int frame_count = 10*fps;
+		float shutter_open = 0.5;
 
-			void* data;
-			vkMapMemory(device.device, output_ubo_buffer.bufferMemory, 0, sizeof(ubo), 0, &data);
-			memcpy(data, &ubo, sizeof(ubo));
-			vkUnmapMemory(device.device, output_ubo_buffer.bufferMemory);
+		std::ofstream outfile;
+		outfile.open(config.outFile.c_str(), std::ios::out | std::ios::binary);
+
+		for (int frame = 0; frame < frame_count; frame++) 
+		{
+			auto con = app.console.ProgressPrinter("playback progress");
+			con.Output << "frame " << (frame+1) << " / " << frame_count;
 
 			VkSubmitInfo submit_info = {};
 			submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 			submit_info.commandBufferCount = 1;
-			submit_info.pCommandBuffers = &output_cmd_buffer.m_vk_command_buffer;
+			submit_info.pCommandBuffers = &init_command_buffer.m_vk_command_buffer;
 			vkQueueSubmit(device.graphicsQueue, 1, &submit_info, VK_NULL_HANDLE);
 
 			vkDeviceWaitIdle(device.device);
+
+			for (int i = 0; i < sample_count; i++)
+			{
+				UniformBufferObject ubo;
+				ubo.width = static_cast<float>(width);
+				ubo.height = static_cast<float>(height);
+				ubo.time = (frame + (shutter_open * float(i) / sample_count)) * (1.0f / fps);
+				ubo._reserved = 0.0f;
+
+				void* data;
+				vkMapMemory(device.device, ubo_buffer.bufferMemory, 0, sizeof(ubo), 0, &data);
+				memcpy(data, &ubo, sizeof(ubo));
+				vkUnmapMemory(device.device, ubo_buffer.bufferMemory);
+
+				VkSubmitInfo submit_info = {};
+				submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+				submit_info.commandBufferCount = 1;
+				submit_info.pCommandBuffers = &main_cmd_buffer.m_vk_command_buffer;
+				vkQueueSubmit(device.graphicsQueue, 1, &submit_info, VK_NULL_HANDLE);
+
+				vkDeviceWaitIdle(device.device);
+			}
+
+			{
+				OutputUniformBufferObject ubo;
+				ubo.image_count = sample_count;
+
+				void* data;
+				vkMapMemory(device.device, output_ubo_buffer.bufferMemory, 0, sizeof(ubo), 0, &data);
+				memcpy(data, &ubo, sizeof(ubo));
+				vkUnmapMemory(device.device, output_ubo_buffer.bufferMemory);
+
+				VkSubmitInfo submit_info = {};
+				submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+				submit_info.commandBufferCount = 1;
+				submit_info.pCommandBuffers = &output_cmd_buffer.m_vk_command_buffer;
+				vkQueueSubmit(device.graphicsQueue, 1, &submit_info, VK_NULL_HANDLE);
+
+				vkDeviceWaitIdle(device.device);
+			}
+
+			uint32_t image_data_size = width * height * 4;
+			std::vector<unsigned char> cpu_image_buffer;
+			cpu_image_buffer.resize(image_data_size);
+			char* mapped_image_data;
+
+			DEBUG_FRAME_CAPTURE_END
+
+				vkMapMemory(device.device, host_visible_image.m_memory.m_vk_memory, 0, image_data_size, 0, (void**)&mapped_image_data);
+			memcpy(cpu_image_buffer.data(), mapped_image_data, image_data_size);
+			vkUnmapMemory(device.device, host_visible_image.m_memory.m_vk_memory);
+
+			for (int i = 0; i < image_data_size; i += 4) {
+				unsigned char r = cpu_image_buffer[i];
+				unsigned char g = cpu_image_buffer[i + 1];
+				unsigned char b = cpu_image_buffer[i + 2];
+				outfile << r << g << b;
+			}
 		}
 
 		// hacky: disable the while after this if
