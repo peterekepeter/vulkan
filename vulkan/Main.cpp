@@ -285,6 +285,47 @@ int main(int argc, char** argv, char** env)
 	return exitCode;
 }
 
+void print_time_span(Console::Transaction& con, int64_t ms)
+{
+	int s = ms / 1000;
+	int m = s / 60;
+	int h = m / 60;
+	int d = h / 24;
+
+	if (d > 0) {
+		con.Output << d << "d " << (h - d * 24) << "h";
+	}
+	else if (h > 0)
+	{
+		con.Output << h << "h " << (m - h * 60) << "m";
+	}
+	else if (m > 0)
+	{
+		con.Output << m << "m " << (s - m * 60) << "s";
+	}
+	else
+	{
+		con.Output << s << "s " << (ms - s * 1000) << "ms";
+	}
+}
+
+class stopwatch
+{
+	std::chrono::steady_clock::time_point start_time;
+
+public:
+	stopwatch()
+	{
+		start_time = std::chrono::steady_clock::now();
+	}
+
+	int64_t elapsed_milliseconds() {
+		auto elapsed = std::chrono::steady_clock::now() - start_time;
+		auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+		return elapsed_ms;
+	}
+};
+
 struct UniformBufferObject
 {
 	float width;
@@ -626,18 +667,33 @@ void runApplication(ApplicationServices& app) {
 			.copy_image(render_output_image.m_vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, host_visible_image.m_vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, width, height)
 			.end_recording();
 
-		int sample_count = 10;
+		int sample_count = 20;
 		int fps = 60;
 		int frame_count = 10*fps;
 		float shutter_open = 0.5;
 
 		std::ofstream outfile;
-		outfile.open(config.outFile.c_str(), std::ios::out | std::ios::binary);
+		outfile.open(config.outFile.c_str(), std::ios::out | std::ios::binary); 
+		auto render_stopwatch = stopwatch();
 
 		for (int frame = 0; frame < frame_count; frame++) 
 		{
-			auto con = app.console.ProgressPrinter("playback progress");
-			con.Output << "frame " << (frame+1) << " / " << frame_count;
+			{
+				auto con = app.console.ProgressPrinter("playback progress");
+				con.Output << "frame " << (frame + 1) << " / " << frame_count;
+				
+				auto elapsed_ms = render_stopwatch.elapsed_milliseconds();
+
+				if (frame > 0 && elapsed_ms > 1000)
+				{
+					double ms_per_frame = elapsed_ms / (double)frame;
+					auto remaining_frames = frame_count - frame;
+					int remaining_ms = (int)(remaining_frames * ms_per_frame);
+					con.Output << " about ";
+					print_time_span(con, remaining_ms);
+					con.Output << " left    ";
+				}
+			}
 
 			VkSubmitInfo submit_info = {};
 			submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
