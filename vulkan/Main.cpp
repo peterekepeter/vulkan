@@ -507,6 +507,10 @@ void runApplication(ApplicationServices& app) {
 	VulkanObjectBuilder builder(device);
 
 	if (config.offline) {
+
+		// prevent system from going to sleep, but goes to away mode instead and can turn off the monitor
+		SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED);
+
 		DEBUG_FRAME_CAPTURE_INIT;
 		DEBUG_FRAME_CAPTURE_START;
 
@@ -667,9 +671,9 @@ void runApplication(ApplicationServices& app) {
 			.copy_image(render_output_image.m_vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, host_visible_image.m_vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, width, height)
 			.end_recording();
 
-		int sample_count = 20;
-		int fps = 60;
-		int frame_count = 10*fps;
+		int sample_count = config.sample_count;
+		int fps = config.fps;
+		int frame_count = config.frame_count;
 		float shutter_open = 0.5;
 
 		std::ofstream outfile;
@@ -761,6 +765,9 @@ void runApplication(ApplicationServices& app) {
 				outfile << r << g << b;
 			}
 		}
+
+		// preventing sleep is no longer a requirement
+		SetThreadExecutionState(ES_CONTINUOUS);
 
 		// hacky: disable the while after this if
 		running = false;

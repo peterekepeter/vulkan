@@ -12,6 +12,8 @@ struct Configuration
 	int xres = 0;
 	int yres = 0;
 	int fps = 60;
+	int sample_count = 1;
+	int frame_count = -1;
 	int device_index = -1;
 	std::wstring windowTitle;
 	std::string musicFile;

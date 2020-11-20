@@ -54,6 +54,9 @@ void ConfigurationBuilder::ReadConsoleConfig()
 		.Option("-o", "--offline", config.offline)
 		.Option("-d", "--device-index", config.device_index)
 		.Option("--outfile", config.outFile)
+		.Option("-r", "--fps", config.fps)
+		.Option("--frame-count", config.frame_count)
+		.Option("--sample-count", config.sample_count)
 		.Parse(argv, argc);
 
 	config.fullscreen = !windowed;
