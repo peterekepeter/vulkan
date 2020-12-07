@@ -25,6 +25,7 @@
 
 #ifndef DEBUG
 #include "renderdoc_app.h"
+#include "../submodule/app-service-sandwich/AppServiceSandwich/AutoBuild.hpp"
 RENDERDOC_API_1_1_2* rdoc_api = NULL;
 #define DEBUG_FRAME_CAPTURE_INIT if (HMODULE mod = GetModuleHandleA("renderdoc.dll"))\
 {\
@@ -56,38 +57,47 @@ static void make_sure_dir_exists(const std::string dirPath)
 	}
 }
 
-static bool rebuild_shaders(Console& console, Configuration& config)
+static bool rebuild_shaders(ApplicationServices& app)
 {
+	auto& config = *app.dependency.GetInstance<Configuration>();
+	auto& console = *app.dependency.GetInstance<Console>();
+	auto& atb = *app.dependency.GetInstance<AutoBuild>();
+
 	if (config.vulkan_sdk == nullptr) {
 		throw std::runtime_error("rebuilding shaders requires Vulkan SDK!\n" 
 			"Download from: https://vulkan.lunarg.com/sdk/home#windows");
 	}
 	console.Open().Output << "Rebuilding shaders\n";
 	bool success = true;
+
 	std::string toolsPath = (*config.vulkan_sdk) + "/Bin";
 	std::string compiler = toolsPath + "/glslangValidator.exe";
 	std::string optimizer = toolsPath + "/spirv-opt.exe";
-	make_sure_dir_exists("spv");
-	auto result1 = ProcessCommand::Execute(compiler 
-		+ " -V shader.frag -o spv/frag.spv");
-	auto result2 = ProcessCommand::Execute(compiler 
-		+ " -V shader.vert -o spv/vert.spv");
-	if (result1.exitCode == 0) {
-		auto result3 = ProcessCommand::Execute(optimizer
-			+ " -O spv/frag.spv -o spv/frag.spv");
-	}
-	else {
-		console.Open().Error << result1.output;
-		success = false;
-	}
-	if (result2.exitCode == 0) {
-		auto result4 = ProcessCommand::Execute(optimizer
-			+ " -O spv/vert.spv -o spv/vert.spv");
-	}
-	else {
-		console.Open().Error << result2.output;
-		success = false;
-	}
+
+	atb.tool("glsl", [compiler, &console](const char* in, const char* out) { 
+		auto cmd = compiler + " -V " + in + " -o " + out;
+		auto result = ProcessCommand::Execute(cmd);
+		if (result.exitCode != 0) {
+			console.Open().Error << result.output;
+		}
+		return result.exitCode;
+	});
+
+	atb.tool("spv-opt", [optimizer, &console](const char* in, const char* out) {
+		auto cmd = optimizer + " -O " + in + " -o " + out;
+		auto result = ProcessCommand::Execute(cmd);
+		if (result.exitCode != 0) {
+			console.Open().Error << result.output;
+		}
+		return result.exitCode;
+	});
+
+	make_sure_dir_exists("build");
+	atb.step("glsl", "shader.frag", "build/shader.frag.spv");
+	atb.step("glsl", "shader.vert", "build/shader.vert.spv");
+	atb.step("spv-opt", "build/shader.frag.spv", "build/shader.frag.opt.spv");
+	atb.step("spv-opt", "build/shader.vert.spv", "build/shader.vert.opt.spv");
+	atb.wait_idle();
 	return success;
 }
 
@@ -95,7 +105,7 @@ static std::vector<char> read_file(const std::string& filename) {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
     if (!file.is_open()) {
-        throw std::runtime_error("failed to open file!");
+        throw std::runtime_error(std::string("failed to open file! ") + filename);
     }
 
 	size_t fileSize = (size_t)file.tellg();
@@ -109,7 +119,7 @@ static std::vector<char> read_file(const std::string& filename) {
 
 static std::vector<char> read_shader(const std::string& filename) {
 	std::string newname = filename; // copy;
-	newname = "spv\\" + filename + ".spv";
+	newname = "build\\" + filename + ".opt.spv";
 	return read_file(newname);
 }
 
@@ -233,6 +243,7 @@ static void configure(ApplicationServices& app, int argc, char** argv, char** en
 	di.For<IConsoleDriver>().UseType<Win32DefaultConsoleDriver>();
 	app.console.UseDriver(app.dependency.GetInstance<IConsoleDriver>());
 	di.For<Console>().UseSharedInstance(&app.console);
+	di.For<AutoBuild>().UseDefaultConstructor();
 
 	di.For<Configuration>().UseFactory([&] {	
 		return ConfigurationBuilder()
@@ -395,7 +406,7 @@ void runApplication(ApplicationServices& app) {
 	int yres = config.yres;
 	
 	if (config.liveReload) {
-		rebuild_shaders(app.console, config);
+		rebuild_shaders(app);
 	}
 
 	ApplyEnvVarChanges();
@@ -550,8 +561,8 @@ void runApplication(ApplicationServices& app) {
 			.subpass(0).writes_color_attachment(0);
 
 		app.console.Open().Output << "Reading shader binaries.\n";
-		VulkanShaderModule vertex_shader = builder.shader_module(read_shader("vert"));
-		VulkanShaderModule fragment_shader = builder.shader_module(read_shader("frag"));
+		VulkanShaderModule vertex_shader = builder.shader_module(read_shader("shader.vert"));
+		VulkanShaderModule fragment_shader = builder.shader_module(read_shader("shader.frag"));
 
 		VulkanDescriptorSetLayout descriptor_set_layout = builder.descriptor_set_layout()
 			.add_uniform_buffer(0).with_both_vertex_fragment_stage_access();
@@ -776,8 +787,8 @@ void runApplication(ApplicationServices& app) {
 	while (running) {
 
 		app.console.Open().Output << "Reading shader binaries.\n";
-		auto vertShader = builder.shader_module(read_shader("vert"));
-		auto fragShader = builder.shader_module(read_shader("frag"));
+		auto vertShader = builder.shader_module(read_shader("shader.vert"));
+		auto fragShader = builder.shader_module(read_shader("shader.frag"));
 
 		app.console.Open().Output << "Creating swap chain.\n";
 		physical.resetSwapChain();
@@ -884,20 +895,19 @@ void runApplication(ApplicationServices& app) {
 			ProcessWindowMessagesNonBlocking();
 
 			bool rebuild = false;
-			if (directory != nullptr) {
+			if (liveReload && directory != nullptr) {
+
+				auto atb = app.dependency.GetInstance<AutoBuild>();
+
 				while (directory->HasChange())
 				{
 					shouldPaint = true;
 					auto diff = directory->ReadChange();
-					if (diff.filename == "shader.vert" || diff.filename == "shader.frag")
-					{
-						rebuild = true;
-					}
+					atb->notify_file_change(diff.filename.c_str());
 				}
-			}
 
-			if (rebuild && liveReload) {
-				if (rebuild_shaders(app.console, config)) {
+				if (!atb->m_is_idle) {
+					atb->wait_idle();
 					resize = true;
 				}
 			}
