@@ -18,6 +18,7 @@ struct Configuration
 	std::wstring windowTitle;
 	std::string musicFile;
 	std::string outFile;
+	std::string curvesFile;
 	std::unique_ptr<std::string> vulkan_sdk = nullptr;
 	bool musicStream = true;
 	bool musicEnabled = true;

@@ -224,6 +224,9 @@
     <ProjectReference Include="..\submodule\app-service-sandwich\AppServiceSandwich\AppServiceSandwich.vcxproj">
       <Project>{00e14769-860e-4f44-9b7d-2733ff5ade62}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\submodule\curve-editor\curve-lib\curve-lib.vcxproj">
+      <Project>{e645429e-0b78-4684-941f-b2121333e84d}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\submodule\simple-audio\simple-audio\simple-audio.vcxproj">
       <Project>{eb5288bc-36d6-4877-b669-2da14ad510e2}</Project>
     </ProjectReference>

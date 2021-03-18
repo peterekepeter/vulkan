@@ -142,5 +142,8 @@ void ConfigurationBuilder::ReadConfigurationFile()
 		else if (key == "liveReload") {
 			config.liveReload = value == "1";
 		}
+		else if (key == "curves") {
+			config.curvesFile = value;
+		}
 	}
 }

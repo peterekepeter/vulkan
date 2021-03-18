@@ -26,6 +26,7 @@
 #ifndef DEBUG
 #include "renderdoc_app.h"
 #include "../submodule/app-service-sandwich/AppServiceSandwich/AutoBuild.hpp"
+#include "../submodule/curve-editor/curve-lib/io_binary.h"
 RENDERDOC_API_1_1_2* rdoc_api = NULL;
 #define DEBUG_FRAME_CAPTURE_INIT if (HMODULE mod = GetModuleHandleA("renderdoc.dll"))\
 {\
@@ -407,6 +408,16 @@ void runApplication(ApplicationServices& app) {
 	
 	if (config.liveReload) {
 		rebuild_shaders(app);
+	}
+
+	document_model curves;
+	std::vector<float> curves_eval_result;
+
+	if (config.curvesFile.length() > 0) {
+		app.console.Open().Output << "Reading curves file '" << config.curvesFile << "'\n";
+		std::ifstream file(config.curvesFile, std::ios::binary);
+		io_binary::read(file, curves);
+		curves_eval_result.resize(curves.curve_list.size());
 	}
 
 	ApplyEnvVarChanges();
@@ -802,7 +813,8 @@ void runApplication(ApplicationServices& app) {
 			;
 
 		VulkanDescriptorSetLayout ubo_descriptor_set_layout = builder.descriptor_set_layout()
-			.add_uniform_buffer(0).with_both_vertex_fragment_stage_access();
+			.add_uniform_buffer(0).with_both_vertex_fragment_stage_access()
+			.add_uniform_buffer(1).with_both_vertex_fragment_stage_access();
 
 		VulkanPipelineLayout pipeline_layout = builder.pipeline_layout()
 			.add(ubo_descriptor_set_layout.m_vk_descriptor_set_layout);
@@ -830,16 +842,18 @@ void runApplication(ApplicationServices& app) {
 
 
 		VulkanDescriptorPool descriptor_pool = builder.descriptor_pool()
-			.uniform_buffers(swap.swapChainImages.size());
+			.uniform_buffers(swap.swapChainImages.size() * 2);
 
 		// uniform buffers
 		std::vector<Buffer> uniformBuffers;
-
+		std::vector<Buffer> uniformParamBuffers;
 
 		uniformBuffers.reserve(swap.swapChainImages.size());
+		uniformParamBuffers.reserve(swap.swapChainImages.size());
 
 		for (size_t i = 0; i < swap.swapChainImages.size(); i++) {
 			uniformBuffers.emplace_back(device.device, physical.physicalDevice, sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			uniformParamBuffers.emplace_back(device.device, physical.physicalDevice, curves.curve_list.size() * sizeof(float), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		}
 
 		// command buffers
@@ -850,6 +864,7 @@ void runApplication(ApplicationServices& app) {
 		for (size_t i = 0; i < swap.swapChainImages.size(); i++) {
 			descriptor_sets.push_back(descriptor_pool.allocate_descriptor_set(ubo_descriptor_set_layout));
 			descriptor_sets[i].write_uniform_buffer(0, uniformBuffers[i].buffer);
+			descriptor_sets[i].write_uniform_buffer(1, uniformParamBuffers[i].buffer);
 		}
 
 		// recording 
@@ -956,6 +971,14 @@ void runApplication(ApplicationServices& app) {
 			vkMapMemory(device.device, uniformBuffers[imageIndex].bufferMemory, 0, sizeof(ubo), 0, &data);
 			memcpy(data, &ubo, sizeof(ubo));
 			vkUnmapMemory(device.device, uniformBuffers[imageIndex].bufferMemory);
+
+			// eval curves and write to GPU buffer
+			for (int i = 0; i < curves.curve_list.size(); i++) {
+				curves_eval_result[i] = curves.curve_list[i].eval(ubo.time);
+			}
+			vkMapMemory(device.device, uniformParamBuffers[imageIndex].bufferMemory, 0, curves_eval_result.size() * sizeof(float), 0, &data);
+			memcpy(data, curves_eval_result.data(), curves_eval_result.size() * sizeof(float));
+			vkUnmapMemory(device.device, uniformParamBuffers[imageIndex].bufferMemory);
 
 			VkSubmitInfo submitInfo = {};
 			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
