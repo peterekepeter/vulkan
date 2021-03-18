@@ -4,3 +4,6 @@
 [submodule "submodule/simple-audio"]
 	path = submodule/simple-audio
 	url = https://github.com/peterekepeter/simple-audio.git
+[submodule "submodule/curve-editor"]
+	path = submodule/curve-editor
+	url = git@github.com:peterekepeter/curve-editor.git
