@@ -410,16 +410,6 @@ void runApplication(ApplicationServices& app) {
 		rebuild_shaders(app);
 	}
 
-	document_model curves;
-	std::vector<float> curves_eval_result;
-
-	if (config.curvesFile.length() > 0) {
-		app.console.Open().Output << "Reading curves file '" << config.curvesFile << "'\n";
-		std::ifstream file(config.curvesFile, std::ios::binary);
-		io_binary::read(file, curves);
-		curves_eval_result.resize(curves.curve_list.size());
-	}
-
 	ApplyEnvVarChanges();
 
 	AppVulkanLogger logger{app};
@@ -800,6 +790,16 @@ void runApplication(ApplicationServices& app) {
 		app.console.Open().Output << "Reading shader binaries.\n";
 		auto vertShader = builder.shader_module(read_shader("shader.vert"));
 		auto fragShader = builder.shader_module(read_shader("shader.frag"));
+
+		document_model curves;
+		std::vector<float> curves_eval_result;
+
+		if (config.curvesFile.length() > 0) {
+			app.console.Open().Output << "Reading curves file '" << config.curvesFile << "'\n";
+			std::ifstream file(config.curvesFile, std::ios::binary);
+			io_binary::read(file, curves);
+			curves_eval_result.resize(curves.curve_list.size());
+		}
 
 		app.console.Open().Output << "Creating swap chain.\n";
 		physical.resetSwapChain();
