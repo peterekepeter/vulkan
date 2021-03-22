@@ -172,6 +172,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="framework.h" />
     <ClInclude Include="VulkanCommandBuffer.h" />
     <ClInclude Include="VulkanCommandPool.h" />
     <ClInclude Include="VulkanDescriptorPool.h" />
@@ -197,12 +198,14 @@
     <ClInclude Include="VulkanSampler.h" />
     <ClInclude Include="VulkanShaderModule.h" />
     <ClInclude Include="VulkanSwapChain.h" />
+    <ClInclude Include="VulkanWindow.h" />
     <ClInclude Include="Window.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AppVulkanLogger.cpp" />
     <ClCompile Include="BuiltinShaders.cpp" />
     <ClCompile Include="Configuration.cpp" />
+    <ClCompile Include="framework.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Playback.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -218,6 +221,7 @@
     <ClCompile Include="VulkanGraphicsPipeline.cpp" />
     <ClCompile Include="VulkanShader.cpp" />
     <ClCompile Include="VulkanSwapChain.cpp" />
+    <ClCompile Include="VulkanWindow.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>

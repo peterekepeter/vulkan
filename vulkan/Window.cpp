@@ -2,53 +2,20 @@
 
 #include "Window.hpp"
 
-VulkanWindow::VulkanWindow(VkInstance instance, HWND hWnd): instance(instance) {
-	VkWin32SurfaceCreateInfoKHR createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-	createInfo.hwnd = hWnd;
-	createInfo.hinstance = GetModuleHandle(nullptr);
+#define WINDOW_CLASS_NAME (L"WindowClass")
 
-	auto CreateWin32SurfaceKHR = (PFN_vkCreateWin32SurfaceKHR)vkGetInstanceProcAddr(instance, "vkCreateWin32SurfaceKHR");
+static bool did_global_init = false;
 
-	if (!CreateWin32SurfaceKHR || CreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create window surface!");
-	}
-}
+struct create_win32_window_result { HWND hwnd; int client_width; int client_height; };
 
-VulkanWindow::~VulkanWindow()
-{
-	vkDestroySurfaceKHR(instance, surface, nullptr);
-}
+static void disable_vk_steam_overlay(bool disabled);
+static create_win32_window_result create_win32_window(int nCmdShow, bool fullscreen, bool borderless, int xres = 0, int yres = 0, const wchar_t* title = nullptr);
+static void adjust_window_size(HWND hwnd, int& clientWidth, int& clientHeight, int xres, int yres);
+static LRESULT CALLBACK class_wnd_proc_wrapper(HWND hwnd, UINT message, WPARAM w_param, LPARAM l_param);
+static void register_window_class();
 
-InitWindowInfo initInfo;
 
-void OnWindowDpiChanged(int dpi) {
-
-}
-
-void OnWindowResize(int x, int y) {
-	if (initInfo.onWindowResize != nullptr) {
-		initInfo.onWindowResize(x, y);
-	}
-}
-
-void OnWindowDestroy() {
-	if (initInfo.onCloseWindow != nullptr) {
-		initInfo.onCloseWindow();
-	}
-}
-
-void OnWindowPaint() {
-	if (initInfo.onWindowPaint != nullptr) initInfo.onWindowPaint();
-}
-
-void OnKeystateChange(int key, bool state) {
-	if (initInfo.onKeystateChange != nullptr) {
-		initInfo.onKeystateChange(key, state);
-	}
-}
-
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT Window::wnd_proc(UINT message, WPARAM wParam, LPARAM lParam)
 {
 	bool keySet = false;
 	bool keyDown = false;
@@ -57,7 +24,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 	{
 		int wmId = LOWORD(wParam);
-		return DefWindowProc(hWnd, message, wParam, lParam);
+		return DefWindowProc(m_hwnd, message, wParam, lParam);
 	}
 	break;
 	case WM_SIZE:
@@ -72,7 +39,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			break;
 		}
-		OnWindowResize(LOWORD(lParam), HIWORD(lParam));
+		m_info.on_resize(LOWORD(lParam), HIWORD(lParam));
 		break;
 	case WM_DPICHANGED:
 	{
@@ -80,7 +47,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// UpdateDpiDependentFontsAndResources();
 
 		RECT* const prcNewWindow = (RECT*)lParam;
-		SetWindowPos(hWnd,
+		SetWindowPos(m_hwnd,
 			NULL,
 			prcNewWindow->left,
 			prcNewWindow->top,
@@ -88,7 +55,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			prcNewWindow->bottom - prcNewWindow->top,
 			SWP_NOZORDER | SWP_NOACTIVATE);
 
-		OnWindowDpiChanged(g_dpi);
 		break;
 	}
 	case WM_KEYUP:
@@ -96,56 +62,84 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_KEYDOWN: {
 		if (keySet == false) keyDown = true;
 		bool nextState = keyDown;
-		OnKeystateChange(int(wParam), keyDown);
+		m_info.on_key(int(wParam), keyDown);
 		// on esc exit!
 		if (wParam == VK_ESCAPE) {
-			DestroyWindow(hWnd);
+			DestroyWindow(m_hwnd);
 		}
 		break;
 	}
 	case WM_DESTROY:
-		OnWindowDestroy();
-		PostQuitMessage(0);
+		m_info.on_close();
+ 		PostQuitMessage(0);
 		break;
 	default:
-		return DefWindowProc(hWnd, message, wParam, lParam);
+		return DefWindowProc(m_hwnd, message, wParam, lParam);
 	}
 	return 0;
 }
 
-HINSTANCE hInstance;
-HWND hwnd = nullptr;
-const wchar_t* szTitle = L"Vulkan Application";
-const wchar_t* szWindowClass = L"WindowClass";
-bool didInit = false;
-
-static ATOM MyRegisterClass(HINSTANCE hInstance);
-static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen, bool borderless, int xres = 0, int yres = 0);
-static void AdjustWindowSize(int& clientWidth, int& clientHeight, int xres, int yres);
-
-HWND InitWindow(const InitWindowInfo& info) {
-	if (didInit) return hwnd;
-
-	initInfo = info;
-
-	if (initInfo.title.size() > 0) { szTitle = initInfo.title.c_str(); }
-
-	hInstance = GetModuleHandle(NULL);
-
-	// Initialize global strings
-	MyRegisterClass(hInstance);
-
-	// Perform application initialization:
-	if (!InitInstance(hInstance, true, initInfo.fullscreen, info.borderless, info.xres, info.yres))
-	{
-		throw std::runtime_error("Failed to create window.");
-	}
-
-	didInit = true;
-	return hwnd;
+HWND Window::get_hwnd()
+{
+	return m_hwnd;
 }
 
-void ProcessWindowMessagesNonBlocking() {
+Window::Window(const InitWindowInfo& info)
+{
+	auto title = L"Window";
+	m_info = info;
+
+	if (m_info.title.size() > 0) {
+		title = m_info.title.c_str();
+	}
+
+	if (!did_global_init) {
+		// Initialize global strings
+		register_window_class();
+		did_global_init = true;
+	}
+	disable_vk_steam_overlay(!info.disable_steam_overlay);
+
+	auto result = create_win32_window(true, info.fullscreen, info.borderless, info.x_res, info.y_res, title);
+	m_hwnd = result.hwnd;
+	auto bring_to_top = BringWindowToTop(m_hwnd);
+	assert(bring_to_top != FALSE, "bring window to top");
+	SetWindowLongPtr(m_hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+	info.on_resize(result.client_width, result.client_height);
+	ensure(m_hwnd != NULL, "window was created");
+}
+
+Window::Window(Window&& other)
+{
+	m_info = other.m_info;
+	m_hwnd = other.m_hwnd;
+	other.m_hwnd = NULL;
+}
+
+Window& Window::operator=(Window&& other)
+{
+	if (m_hwnd) {
+		SetWindowLongPtr(m_hwnd, GWLP_USERDATA, NULL);
+		auto result = DestroyWindow(m_hwnd);
+		ensure(result == 0, "window was destroyed");
+		m_hwnd = NULL;
+	}
+	m_info = other.m_info;
+	m_hwnd = other.m_hwnd;
+	other.m_hwnd = NULL;
+	return *this;
+}
+
+Window::~Window()
+{
+	if (!m_hwnd) { return; }
+	SetWindowLongPtr(m_hwnd, GWLP_USERDATA, NULL);
+	auto result = DestroyWindow(m_hwnd);
+	ensure(result != 0, "window was destroyed");
+	m_hwnd = NULL;
+}
+
+void process_thread_message_queue_non_blocking() {
 	MSG msg;
 	if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 	{
@@ -154,7 +148,7 @@ void ProcessWindowMessagesNonBlocking() {
 	}
 }
 
-void ProcessWindowMessages() {
+void process_thread_message_queue() {
 	MSG msg;
 	while (GetMessage(&msg, nullptr, 0, 0))
 	{
@@ -163,15 +157,11 @@ void ProcessWindowMessages() {
 	}
 }
 
-void ApplyEnvVarChanges()
-{
-	// to fix steam overlay bug
-	SetEnvironmentVariableW(L"DISABLE_VK_LAYER_VALVE_steam_overlay_1", L"1");
-}
-
-static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen, bool borderless, int xres, int yres)
+static create_win32_window_result create_win32_window(int nCmdShow, bool fullscreen, bool borderless, int xres, int yres, const wchar_t* title)
 {
 	int clientWidth = 0, clientHeight = 0;
+	HWND result_hwnd = NULL;
+	HINSTANCE h_instance = GetModuleHandle(NULL);
 
 	if (fullscreen)
 	{
@@ -184,7 +174,7 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen, boo
 		if (!borderless)
 		{
 			int i = 0; 
-			DEVMODEA devmode;
+			DEVMODEA devmode = {};
 			bool found = false;
 			while (!found && EnumDisplaySettingsA(nullptr, i, &devmode) == TRUE) {
 				if (devmode.dmPelsWidth == xres && devmode.dmPelsHeight == yres) {
@@ -194,14 +184,15 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen, boo
 			}
 			
 			if (found) {
-				if (ChangeDisplaySettingsA(&devmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL) return FALSE;
+				auto change_resolution_result = ChangeDisplaySettingsA(&devmode, CDS_FULLSCREEN);
+				assert(change_resolution_result == DISP_CHANGE_SUCCESSFUL, "successfully changed resolution");
 			}
-			hwnd = CreateWindowW(szWindowClass, szTitle, WS_POPUP | WS_VISIBLE, 0, 0, xres, yres, 0, 0, 0, 0);
+			result_hwnd = CreateWindowW(WINDOW_CLASS_NAME, title, WS_POPUP | WS_VISIBLE, 0, 0, xres, yres, 0, 0, 0, 0);
 		}
 		else 
 		{
-			hwnd = CreateWindowW(szWindowClass, szTitle, WS_POPUP | WS_VISIBLE,
-				0, 0, xres, yres, nullptr, nullptr, hInstance, nullptr);
+			result_hwnd = CreateWindowW(WINDOW_CLASS_NAME, title, WS_POPUP | WS_VISIBLE,
+				0, 0, xres, yres, nullptr, nullptr, h_instance, nullptr);
 		}
 		clientWidth = xres;
 		clientHeight = yres;
@@ -226,41 +217,39 @@ static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, bool fullscreen, boo
 			newHeight = clientRect.bottom - clientRect.top;
 		}
 
-		hwnd = CreateWindowW(szWindowClass, szTitle, dwStyle,
+		result_hwnd = CreateWindowW(WINDOW_CLASS_NAME, title, dwStyle,
 			CW_USEDEFAULT, 0, newWidth, newHeight,
-			nullptr, nullptr, hInstance, nullptr);
-		ShowWindow(hwnd, nCmdShow);
-		SetWindowTextW(hwnd, szTitle);
+			nullptr, nullptr, h_instance, nullptr);
+		ShowWindow(result_hwnd, nCmdShow);
+		SetWindowTextW(result_hwnd, title);
 
 		RECT clientRect;
-		GetClientRect(hwnd, &clientRect);
+		GetClientRect(result_hwnd, &clientRect);
 		clientWidth = clientRect.right - clientRect.left;
 		clientHeight = clientRect.bottom - clientRect.top;
 
 		if (!unspecifiedSize)
 		{
-			// adjusts clientWidth and clientHeight to required size
-			AdjustWindowSize(clientWidth, clientHeight, xres, yres);
+			// adjusts clientWidth and clie ntHeight to required size
+			adjust_window_size(result_hwnd, clientWidth, clientHeight, xres, yres);
 		}
 	}
 
-	if (!hwnd)
-	{
-		return FALSE;
-	}
+	ensure(result_hwnd != NULL, "window was created");
 
-	OnWindowResize(clientWidth, clientHeight);
-	return TRUE;
+	return create_win32_window_result{
+		result_hwnd, clientWidth, clientHeight
+	};
 }
 
-static void AdjustWindowSize(int& clientWidth, int& clientHeight, int xres, int yres)
+static void adjust_window_size(HWND _hwnd, int& clientWidth, int& clientHeight, int xres, int yres)
 {
 	int adjustmentTry = 0, maxAdjustmentTry = 3;
 
 	while (clientWidth != xres || clientHeight != yres)
 	{
 		RECT clientRect;
-		GetClientRect(hwnd, &clientRect);
+		GetClientRect(_hwnd, &clientRect);
 		clientWidth = clientRect.right - clientRect.left;
 		clientHeight = clientRect.bottom - clientRect.top;
 
@@ -269,30 +258,47 @@ static void AdjustWindowSize(int& clientWidth, int& clientHeight, int xres, int 
 		}
 
 		RECT windowRect;
-		GetWindowRect(hwnd, &windowRect);
+		GetWindowRect(_hwnd, &windowRect);
 		int newWidth = windowRect.right - windowRect.left + xres - clientWidth;
 		int newHeight = windowRect.bottom - windowRect.top + yres - clientHeight;
-		MoveWindow(hwnd, windowRect.left, windowRect.top, newWidth, newHeight, false);
+		MoveWindow(_hwnd, windowRect.left, windowRect.top, newWidth, newHeight, false);
 	}
 }
 
-static ATOM MyRegisterClass(HINSTANCE hInstance)
+static LRESULT CALLBACK class_wnd_proc_wrapper(HWND hwnd, UINT message, WPARAM w_param, LPARAM l_param)
+{
+	auto ptr = GetWindowLongPtr(hwnd, GWLP_USERDATA);
+	if (ptr == NULL) {
+		return DefWindowProc(hwnd, message, w_param, l_param);
+	}
+	else {
+		auto window = reinterpret_cast<Window*>(ptr);
+		return window->wnd_proc(message, w_param, l_param);
+	}
+}
+
+static void register_window_class()
 {
 	WNDCLASSEXW wcex;
-
 	wcex.cbSize = sizeof(WNDCLASSEX);
-
 	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = WndProc;
+	wcex.lpfnWndProc = class_wnd_proc_wrapper;
 	wcex.cbClsExtra = 0;
 	wcex.cbWndExtra = 0;
-	wcex.hInstance = hInstance;
+	wcex.hInstance = GetModuleHandle(NULL);
 	wcex.hIcon = nullptr;
 	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wcex.hbrBackground = nullptr;
 	wcex.lpszMenuName = nullptr;
-	wcex.lpszClassName = szWindowClass;
+	wcex.lpszClassName = WINDOW_CLASS_NAME;
 	wcex.hIconSm = nullptr;
 
-	return RegisterClassExW(&wcex);
+	RegisterClassExW(&wcex);
+}
+
+static void disable_vk_steam_overlay(bool disabled)
+{
+	const wchar_t* value = disabled ? L"1" : nullptr;
+	auto result = SetEnvironmentVariableW(L"DISABLE_VK_LAYER_VALVE_steam_overlay_1", value);
+	ensure(result == TRUE, "steam_overlay env var was edited");
 }

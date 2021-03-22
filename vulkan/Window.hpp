@@ -5,29 +5,34 @@
 class InitWindowInfo {
 public:
 	// todo add stuff
-	std::function<void()> onCloseWindow = nullptr;
-	std::function<void(int, int)> onWindowResize = nullptr;
-	std::function<void(int, bool)> onKeystateChange = nullptr;
-	std::function<void()> onWindowPaint = nullptr;
+	std::function<void()> on_close = nullptr;
+	std::function<void(int, int)> on_resize = nullptr;
+	std::function<void(int, bool)> on_key = nullptr;
+	std::function<void()> on_paint = nullptr;
 	bool fullscreen = false;
 	bool borderless = false;
-	int xres = 0;
-	int yres = 0;
+	bool disable_steam_overlay = true;
+	int x_res = 0;
+	int y_res = 0;
 	std::wstring title;
 };
 
-HWND InitWindow(const InitWindowInfo& info);
-void ProcessWindowMessages();
-void ProcessWindowMessagesNonBlocking();
+void process_thread_message_queue();
+void process_thread_message_queue_non_blocking();
 
-class VulkanWindow {
+class Window {
+
+	HWND m_hwnd;
+	InitWindowInfo m_info;
+
 public:
-	VkInstance instance;
-	VkSurfaceKHR surface;
+	Window(const InitWindowInfo& info);
+	Window(const Window&) = delete;
+	Window& operator = (const Window&) = delete;
+	Window(Window&&);
+	Window& operator = (Window&&);
+	~Window();
 
-	VulkanWindow(VkInstance instance, HWND hwnd);
-	
-	~VulkanWindow();
+	LRESULT wnd_proc(UINT, WPARAM, LPARAM);
+	HWND get_hwnd();
 };
-
-void ApplyEnvVarChanges();

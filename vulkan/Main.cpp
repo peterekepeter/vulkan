@@ -27,6 +27,7 @@
 #include "renderdoc_app.h"
 #include "../submodule/app-service-sandwich/AppServiceSandwich/AutoBuild.hpp"
 #include "../submodule/curve-editor/curve-lib/io_binary.h"
+#include "VulkanWindow.h"
 RENDERDOC_API_1_1_2* rdoc_api = NULL;
 #define DEBUG_FRAME_CAPTURE_INIT if (HMODULE mod = GetModuleHandleA("renderdoc.dll"))\
 {\
@@ -268,33 +269,43 @@ static void configure(ApplicationServices& app, int argc, char** argv, char** en
 
 }
 
+struct RunApplicationResult
+{
+	bool requested_reload = false;
+};
+
 static void printProgress(Console& console, bool isPlaying, double positionInSeconds);
-void runApplication(ApplicationServices& app);
+RunApplicationResult runApplication(ApplicationServices& app);
 
 int main(int argc, char** argv, char** env)
 {
 	ApplicationServices app;
-	int exitCode = 0;
+	int exit_code = 0;
+	bool first_run = true;
 
 	try
 	{
-		app.console.Open().Output << "Configuring application!\n";
-		configure(app, argc, argv, env);
-		app.console.Open().Output << "Starting application!\n";
-		runApplication(app);
+		RunApplicationResult result;
+		while (first_run || result.requested_reload)
+		{
+			app.console.Open().Output << "Configuring application!\n";
+			configure(app, argc, argv, env);
+			app.console.Open().Output << "Starting application!\n";
+			result = runApplication(app);
+		}
 	}
 	catch (const char* message) {
 		app.console.Open().Error << "Fail: " << message << "\n";
-		exitCode = 1;
+		exit_code = 1;
 	}
 	catch (std::exception exception) {
 		app.console.Open().Error << "Fail: " << exception.what() << "\n";
-		exitCode = 1;
+		exit_code = 1;
 	}
-	if (exitCode != 0) {
+	if (exit_code != 0) {
 		app.console.Open().Output << "Shutting down due to failiure!";
 	}
-	return exitCode;
+	return exit_code;
 }
 
 void print_time_span(Console::Transaction& con, int64_t ms)
@@ -397,7 +408,7 @@ VulkanPhysicalDevice ChoosePhysicalDevice(
 
 }
 
-void runApplication(ApplicationServices& app) {
+RunApplicationResult runApplication(ApplicationServices& app) {
 
 	Configuration& config = *app.dependency.GetInstance<Configuration>();
 	bool liveReload = config.liveReload;
@@ -410,8 +421,6 @@ void runApplication(ApplicationServices& app) {
 		rebuild_shaders(app);
 	}
 
-	ApplyEnvVarChanges();
-
 	AppVulkanLogger logger{app};
 
 	VulkanApplication vulkan = VulkanApplicationBuilder(app.console)
@@ -423,7 +432,7 @@ void runApplication(ApplicationServices& app) {
 		.EnableWindowSupport();
 
 	// the actual window
-	bool running = true; // true while window is open
+	bool running = true; // true while window is open 
 	bool resize = true; // true if window was resized
 	bool shouldPaint = true; // tells renderer to render
 	int shouldPaintCount = 0;
@@ -433,16 +442,16 @@ void runApplication(ApplicationServices& app) {
 
 	windowInitInfo.fullscreen = fullscreen;
 	windowInitInfo.borderless = borderless;
-	windowInitInfo.xres = xres;
-	windowInitInfo.yres = yres;
+	windowInitInfo.x_res = xres;
+	windowInitInfo.y_res = yres;
 	windowInitInfo.title = config.windowTitle;
 
-	windowInitInfo.onCloseWindow = [&]() {
+	windowInitInfo.on_close = [&]() {
 		running = false;
 		app.console.Open().Output << "Closed window.\n";
 	};
 
-	windowInitInfo.onWindowResize = [&](int x, int y) {
+	windowInitInfo.on_resize = [&](int x, int y) {
 		resize = true;
 		width = x; 
 		height = y;
@@ -455,7 +464,7 @@ void runApplication(ApplicationServices& app) {
 
 	bool didAutostartMusic = false;
 	if (config.allowControls) {
-		windowInitInfo.onKeystateChange = [&](int key, bool state) {
+		windowInitInfo.on_key = [&](int key, bool state) {
 			if (state == false) return;
 			double nextMusicPosition = currentPlaybackPosition;
 			if (key == VK_SPACE) {
@@ -488,16 +497,16 @@ void runApplication(ApplicationServices& app) {
 		};
 	}
 
-	windowInitInfo.onWindowPaint = [&]() {
+	windowInitInfo.on_paint = [&]() {
 		shouldPaint = true;
 	};
 
 	app.console.Open().Output << "Creating window.\n";
-	auto hwnd = InitWindow(windowInitInfo);
+	Window win32_window(windowInitInfo);
 
 	// create window for vulkan
 	app.console.Open().Output << "Creating surface.\n";
-	VulkanWindow vulkanWindow(vulkan.instance, hwnd);
+	VulkanWindow vulkanWindow(vulkan.instance, win32_window.get_hwnd());
 
 	VulkanPhysicalDevice physical = ChoosePhysicalDevice(app.console, vulkan, vulkanWindow, config);
 
@@ -907,7 +916,7 @@ void runApplication(ApplicationServices& app) {
 
 		// process win32 message loop
 		while (running) {
-			ProcessWindowMessagesNonBlocking();
+			process_thread_message_queue_non_blocking();
 
 			bool rebuild = false;
 			if (liveReload && directory != nullptr) {
@@ -918,6 +927,13 @@ void runApplication(ApplicationServices& app) {
 				{
 					shouldPaint = true;
 					auto diff = directory->ReadChange();
+					if (diff.filename == "config.ini") {
+						app.console.Open().Output << "'" << diff.filename << "' changed, reloading everything...\n";
+						vkDeviceWaitIdle(device.device);
+						RunApplicationResult result;
+						result.requested_reload = true;
+						return result;
+					}
 					atb->notify_file_change(diff.filename.c_str());
 				}
 
@@ -1022,6 +1038,7 @@ void runApplication(ApplicationServices& app) {
 		vkDestroySemaphore(device.device, imageAvailableSemaphore, nullptr);
 	}
 
+	return RunApplicationResult{};
 }
 
 static void printProgress(Console& console, bool isPlaying, double positionInSeconds) {
