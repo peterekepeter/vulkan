@@ -141,7 +141,7 @@ public:
 	Buffer(
 		VkDevice device, 
 		VkPhysicalDevice physical, 
-		VkDeviceSize size, 
+		VkDeviceSize size,
 		VkBufferUsageFlags usage, 
 		VkMemoryPropertyFlags properties) 
 		: device(device)
@@ -277,17 +277,23 @@ struct RunApplicationResult
 static void printProgress(Console& console, bool isPlaying, double positionInSeconds);
 RunApplicationResult runApplication(ApplicationServices& app);
 
+
 int main(int argc, char** argv, char** env)
 {
+	// some win32 function calls depend on this being defined
+	expect(UNICODE == 1 && _UNICODE == 1, "compiled with unicode flag")
+
 	ApplicationServices app;
 	int exit_code = 0;
 	bool first_run = true;
+
 
 	try
 	{
 		RunApplicationResult result;
 		while (first_run || result.requested_reload)
 		{
+			first_run = false;
 			app.console.Open().Output << "Configuring application!\n";
 			configure(app, argc, argv, env);
 			app.console.Open().Output << "Starting application!\n";

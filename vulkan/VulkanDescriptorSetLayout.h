@@ -2,18 +2,16 @@
 
 class VulkanDescriptorSetLayout
 {
+	DECLARE_MOVEABLE_TYPE(VulkanDescriptorSetLayout);
 public:
-	VkDevice m_vk_device;
-	VkDescriptorSetLayout m_vk_descriptor_set_layout;
+	VkDevice m_vk_device = nullptr;
+	VkDescriptorSetLayout m_vk_descriptor_set_layout = VK_NULL_HANDLE;
 
 	VulkanDescriptorSetLayout(VkDevice device, const VkDescriptorSetLayoutCreateInfo& info)
 		: m_vk_device(device) 
 	{
-		vkCreateDescriptorSetLayout(device, &info, nullptr, &m_vk_descriptor_set_layout);
-	}
-
-	~VulkanDescriptorSetLayout() {
-		vkDestroyDescriptorSetLayout(m_vk_device, m_vk_descriptor_set_layout, nullptr);
+		auto result = vkCreateDescriptorSetLayout(device, &info, nullptr, &m_vk_descriptor_set_layout);
+		ensure(result == VK_SUCCESS, "descriptor set layour was created");
 	}
 
 	class Builder
@@ -93,6 +91,7 @@ public:
 		}
 
 		operator VulkanDescriptorSetLayout() {
+			expect(m_vk_device != nullptr);
 			VkDescriptorSetLayoutCreateInfo m_info = {};
 			m_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 			m_info.bindingCount = m_bindings.size();
@@ -100,16 +99,33 @@ public:
 			if (m_is_push_descriptor) {
 				m_info.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR;
 			}
-			return VulkanDescriptorSetLayout(m_vk_device, m_info);
+			assert(m_info.bindingCount == m_bindings.size());
+			auto result = VulkanDescriptorSetLayout(m_vk_device, m_info);
+			ensure(result.m_vk_device != nullptr);
+			ensure(result.m_vk_descriptor_set_layout != VK_NULL_HANDLE);
+			return result;
 		}
 
 		Builder(VkDevice d)
 			: m_vk_device(d)
 			, m_is_push_descriptor(false)
-		{
-		}
+		{}
 
 	private:
 		VkDescriptorSetLayoutBinding& get_last() { return m_bindings[m_bindings.size() - 1]; }
 	};
 };
+
+
+void VulkanDescriptorSetLayout::move_members(VulkanDescriptorSetLayout&& from) {
+	m_vk_device = from.m_vk_device;
+	m_vk_descriptor_set_layout = from.m_vk_descriptor_set_layout;
+	from.m_vk_descriptor_set_layout = VK_NULL_HANDLE;
+}
+
+void VulkanDescriptorSetLayout::free_members() {
+	if (m_vk_descriptor_set_layout != VK_NULL_HANDLE) {
+		vkDestroyDescriptorSetLayout(m_vk_device, m_vk_descriptor_set_layout, nullptr);
+		m_vk_descriptor_set_layout = VK_NULL_HANDLE;
+	}
+}

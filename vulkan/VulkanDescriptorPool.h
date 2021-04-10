@@ -7,37 +7,15 @@
 
 class VulkanDescriptorPool
 {
+	DECLARE_MOVEABLE_COPYABLE_TYPE(VulkanDescriptorPool)
 public:
 	VkDevice m_vk_device;
 	VkDescriptorPool m_descriptor_pool;
 
-	VulkanDescriptorSet allocate_descriptor_set(const VulkanDescriptorSetLayout& layout)
-	{
-		return allocate_descriptor_set(layout.m_vk_descriptor_set_layout);
-	}
-
-	void free_descriptor_set(const VulkanDescriptorSet& descriptor_set)
-	{
-		free_descriptor_set(descriptor_set.m_vk_descriptor_set);
-	}
-
-	void free_descriptor_set(const VkDescriptorSet& vk_descriptor_set)
-	{
-		if (vkFreeDescriptorSets(m_vk_device, m_descriptor_pool, 1, &vk_descriptor_set) != VK_SUCCESS) {
-			throw new std::runtime_error("vkFreeDescriptorSets failed");
-		}
-	}
-
-	VulkanDescriptorSet allocate_descriptor_set(const VkDescriptorSetLayout& vk_layout)
-	{
-		VkDescriptorSetAllocateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		info.pNext = nullptr;
-		info.descriptorPool = m_descriptor_pool;
-		info.descriptorSetCount = 1;
-		info.pSetLayouts = &vk_layout;
-		return VulkanDescriptorSet(m_vk_device, info);
-	}
+	VulkanDescriptorSet allocate_descriptor_set(const VulkanDescriptorSetLayout& layout);
+	VulkanDescriptorSet allocate_descriptor_set(const VkDescriptorSetLayout& vk_layout);
+	void free_descriptor_set(const VulkanDescriptorSet& descriptor_set);
+	void free_descriptor_set(const VkDescriptorSet& vk_descriptor_set);
 
 	class Builder
 	{
@@ -123,9 +101,6 @@ public:
 		}
 	}
 
-	~VulkanDescriptorPool() {
-		vkDestroyDescriptorPool(m_vk_device, m_descriptor_pool, nullptr);
-	}
 
 };
 
@@ -136,4 +111,45 @@ VulkanDescriptorPool::Builder::operator VulkanDescriptorPool() {
 	info.pPoolSizes = m_pool_sizes.data();
 	info.maxSets = get_total_set_count();
 	return VulkanDescriptorPool(m_vk_device, info);
+}
+
+inline void VulkanDescriptorPool::move_members(VulkanDescriptorPool&& other) {
+	m_vk_device = other.m_vk_device;
+	m_descriptor_pool = other.m_descriptor_pool;
+	other.m_descriptor_pool = VK_NULL_HANDLE;
+}
+
+inline void VulkanDescriptorPool::free_members() {
+	if (m_descriptor_pool != VK_NULL_HANDLE) {
+		// When a pool is destroyed, all descriptor sets allocated from the pool are implicitly freed and become invalid.
+		vkDestroyDescriptorPool(m_vk_device, m_descriptor_pool, nullptr);
+		m_descriptor_pool = VK_NULL_HANDLE;
+	}
+}
+
+inline VulkanDescriptorSet VulkanDescriptorPool::allocate_descriptor_set(const VulkanDescriptorSetLayout& layout)
+{
+	return allocate_descriptor_set(layout.m_vk_descriptor_set_layout);
+}
+
+inline void VulkanDescriptorPool::free_descriptor_set(const VulkanDescriptorSet& descriptor_set)
+{
+	free_descriptor_set(descriptor_set.m_vk_descriptor_set);
+}
+
+inline void VulkanDescriptorPool::free_descriptor_set(const VkDescriptorSet& vk_descriptor_set)
+{
+	auto result = vkFreeDescriptorSets(m_vk_device, m_descriptor_pool, 1, &vk_descriptor_set);
+	ensure(result == VK_SUCCESS, "descriptor set was freed");
+}
+
+inline VulkanDescriptorSet VulkanDescriptorPool::allocate_descriptor_set(const VkDescriptorSetLayout& vk_layout)
+{
+	VkDescriptorSetAllocateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	info.pNext = nullptr;
+	info.descriptorPool = m_descriptor_pool;
+	info.descriptorSetCount = 1;
+	info.pSetLayouts = &vk_layout;
+	return VulkanDescriptorSet(m_vk_device, info);
 }

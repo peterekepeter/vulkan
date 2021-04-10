@@ -13,6 +13,7 @@ static create_win32_window_result create_win32_window(int nCmdShow, bool fullscr
 static void adjust_window_size(HWND hwnd, int& clientWidth, int& clientHeight, int xres, int yres);
 static LRESULT CALLBACK class_wnd_proc_wrapper(HWND hwnd, UINT message, WPARAM w_param, LPARAM l_param);
 static void register_window_class();
+static void win32_ensure(bool condition);
 
 
 LRESULT Window::wnd_proc(UINT message, WPARAM wParam, LPARAM lParam)
@@ -71,7 +72,7 @@ LRESULT Window::wnd_proc(UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_DESTROY:
 		m_info.on_close();
- 		PostQuitMessage(0);
+		m_hwnd = NULL; // m_hwnd will no be a valid handle after this message
 		break;
 	default:
 		return DefWindowProc(m_hwnd, message, wParam, lParam);
@@ -109,33 +110,21 @@ Window::Window(const InitWindowInfo& info)
 	ensure(m_hwnd != NULL, "window was created");
 }
 
-Window::Window(Window&& other)
+void Window::move_members(Window&& other)
 {
 	m_info = other.m_info;
 	m_hwnd = other.m_hwnd;
 	other.m_hwnd = NULL;
 }
 
-Window& Window::operator=(Window&& other)
-{
-	if (m_hwnd) {
-		SetWindowLongPtr(m_hwnd, GWLP_USERDATA, NULL);
-		auto result = DestroyWindow(m_hwnd);
-		ensure(result == 0, "window was destroyed");
-		m_hwnd = NULL;
-	}
-	m_info = other.m_info;
-	m_hwnd = other.m_hwnd;
-	other.m_hwnd = NULL;
-	return *this;
-}
-
-Window::~Window()
+void Window::free_members()
 {
 	if (!m_hwnd) { return; }
-	SetWindowLongPtr(m_hwnd, GWLP_USERDATA, NULL);
-	auto result = DestroyWindow(m_hwnd);
-	ensure(result != 0, "window was destroyed");
+	SetLastError(0);
+	auto ptr_result = SetWindowLongPtr(m_hwnd, GWLP_USERDATA, NULL);
+	win32_ensure(ptr_result != 0);
+	auto destroy_result = DestroyWindow(m_hwnd);
+	win32_ensure(destroy_result != 0);
 	m_hwnd = NULL;
 }
 
@@ -154,6 +143,29 @@ void process_thread_message_queue() {
 	{
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
+	}
+}
+
+static void win32_ensure(bool condition) {
+	if (condition) {
+		return;
+	}
+	auto error_code = GetLastError();
+	if (error_code != 0) {
+		char* win32_message;
+		FormatMessageA(
+			FORMAT_MESSAGE_ALLOCATE_BUFFER |
+			FORMAT_MESSAGE_FROM_SYSTEM |
+			FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL,
+			error_code,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPSTR)&win32_message,
+			0, NULL);
+		std::logic_error error(win32_message);
+		LocalFree(win32_message);
+		SetLastError(0);
+		throw error;
 	}
 }
 

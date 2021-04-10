@@ -5,69 +5,19 @@
 
 class VulkanCommandPool
 {
+	DECLARE_MOVEABLE_TYPE(VulkanCommandPool)
 public:
 	VkCommandPool m_vk_command_pool;
 	VkDevice m_vk_device;
 
-	VulkanCommandPool(VkDevice device, VkCommandPoolCreateInfo& info)
-		:m_vk_device(device)
-	{
-		if (vkCreateCommandPool(m_vk_device, &info, nullptr, &m_vk_command_pool) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create command pool!");
-		}
-	}
+	VulkanCommandPool(VkDevice device, VkCommandPoolCreateInfo& info);
 
-	VulkanCommandBuffer allocate_command_buffer() {
-		VkCommandBufferAllocateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		info.commandPool = m_vk_command_pool;
-		info.commandBufferCount = 1;
-		VulkanCommandBuffer result;
+	VulkanCommandBuffer allocate_command_buffer();
 
-		if (vkAllocateCommandBuffers(m_vk_device, &info, &result.m_vk_command_buffer) != VK_SUCCESS) {
-			throw std::runtime_error("failed to allocate command buffer!");
-		}
-		return result;
-	}
+	void free_command_buffer(const VulkanCommandBuffer& buffer);
 
-	void free_command_buffer(const VulkanCommandBuffer& buffer) {
-		vkFreeCommandBuffers(m_vk_device, m_vk_command_pool, 1, &buffer.m_vk_command_buffer);
-	}
-
-	std::vector<VulkanCommandBuffer> allocate_command_buffers(uint32_t count) {
-		VkCommandBufferAllocateInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		info.commandPool = m_vk_command_pool;
-		info.commandBufferCount = count;
-
-		std::vector<VkCommandBuffer> buffers;
-		buffers.resize(count);
-
-		if (vkAllocateCommandBuffers(m_vk_device, &info, buffers.data()) != VK_SUCCESS) {
-			throw std::runtime_error("failed to allocate command buffers!");
-		}
-
-		std::vector<VulkanCommandBuffer> result;
-		result.resize(count);
-		for (int i = 0; i < count; i++) {
-			result[i].m_vk_command_buffer = buffers[i];
-		}
-
-		return result;
-	}
-
-	void free_command_buffers(const std::vector<VulkanCommandBuffer>& command_buffers)
-	{
-		auto count = command_buffers.size();
-		std::vector<VkCommandBuffer> buffers;
-		buffers.resize(count);
-		for (int i = 0; i < count; i++) {
-			buffers[i] = command_buffers[i].m_vk_command_buffer;
-		}
-		vkFreeCommandBuffers(m_vk_device, m_vk_command_pool, buffers.size(), buffers.data());
-	}
+	std::vector<VulkanCommandBuffer> allocate_command_buffers(uint32_t count);
+	void free_command_buffers(const std::vector<VulkanCommandBuffer>& command_buffers);
 
 	void reset_command_buffer(VulkanCommandBuffer buffer) { reset_individual_buffer(buffer.m_vk_command_buffer, false); }
 	void reset_command_buffer(VkCommandBuffer vk_buffer) { reset_individual_buffer(vk_buffer, false); }
@@ -76,11 +26,6 @@ public:
 
 	void reset_command_pool() { reset_command_pool_impl(false); }
 	void reset_and_free_command_pool() { reset_command_pool_impl(true); }
-	
-
-	~VulkanCommandPool() {
-		vkDestroyCommandPool(m_vk_device, m_vk_command_pool, nullptr);
-	}
 
 	class Builder
 	{
@@ -129,3 +74,75 @@ private:
 	}
 
 };
+
+inline VulkanCommandPool::VulkanCommandPool(VkDevice device, VkCommandPoolCreateInfo& info)
+	:m_vk_device(device)
+{
+	auto result = vkCreateCommandPool(m_vk_device, &info, nullptr, &m_vk_command_pool);
+	ensure(result == VK_SUCCESS, "command pool was created");
+}
+
+inline VulkanCommandBuffer VulkanCommandPool::allocate_command_buffer() {
+	VkCommandBufferAllocateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	info.commandPool = m_vk_command_pool;
+	info.commandBufferCount = 1;
+	VulkanCommandBuffer result;
+
+	auto alloc = vkAllocateCommandBuffers(m_vk_device, &info, &result.m_vk_command_buffer);
+	ensure(alloc == VK_SUCCESS, "command buffer was allocated");
+	return result;
+}
+
+inline void VulkanCommandPool::free_command_buffer(const VulkanCommandBuffer& buffer) {
+	vkFreeCommandBuffers(m_vk_device, m_vk_command_pool, 1, &buffer.m_vk_command_buffer);
+}
+
+inline std::vector<VulkanCommandBuffer> VulkanCommandPool::allocate_command_buffers(uint32_t count) {
+	VkCommandBufferAllocateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	info.commandPool = m_vk_command_pool;
+	info.commandBufferCount = count;
+
+	std::vector<VkCommandBuffer> buffers;
+	buffers.resize(count);
+
+	auto alloc_result = vkAllocateCommandBuffers(m_vk_device, &info, buffers.data());
+	ensure(alloc_result == VK_SUCCESS, "command buffers were allocated");
+
+	std::vector<VulkanCommandBuffer> result;
+	result.resize(count);
+	for (int i = 0; i < count; i++) {
+		result[i].m_vk_command_buffer = buffers[i];
+	}
+
+	return result;
+}
+
+inline void VulkanCommandPool::free_command_buffers(const std::vector<VulkanCommandBuffer>& command_buffers)
+{
+	auto count = command_buffers.size();
+	std::vector<VkCommandBuffer> buffers;
+	buffers.resize(count);
+	for (int i = 0; i < count; i++) {
+		buffers[i] = command_buffers[i].m_vk_command_buffer;
+	}
+	vkFreeCommandBuffers(m_vk_device, m_vk_command_pool, buffers.size(), buffers.data());
+}
+
+inline void VulkanCommandPool::move_members(VulkanCommandPool&& other) {
+	m_vk_device = other.m_vk_device;
+	m_vk_command_pool = other.m_vk_command_pool;
+	other.m_vk_command_pool = VK_NULL_HANDLE;
+}
+
+inline void VulkanCommandPool::free_members() {
+	if (m_vk_command_pool != VK_NULL_HANDLE) {
+		// https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/vkDestroyCommandPool.html
+		// When a pool is destroyed, all command buffers allocated from the pool are freed.
+		vkDestroyCommandPool(m_vk_device, m_vk_command_pool, nullptr);
+		m_vk_command_pool = VK_NULL_HANDLE;
+	}
+}

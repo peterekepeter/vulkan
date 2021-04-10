@@ -4,6 +4,7 @@
 
 class VulkanPipelineLayout
 {
+	DECLARE_MOVEABLE_TYPE(VulkanPipelineLayout);
 public:
 	VkDevice m_vk_device;
 	VkPipelineLayout m_vk_pipeline_layout;
@@ -11,11 +12,9 @@ public:
 	VulkanPipelineLayout(VkDevice device, const VkPipelineLayoutCreateInfo& info)
 		: m_vk_device(device)
 	{
-		vkCreatePipelineLayout(device, &info, nullptr, &m_vk_pipeline_layout);
-	}
-
-	~VulkanPipelineLayout() {
-		vkDestroyPipelineLayout(m_vk_device, m_vk_pipeline_layout, nullptr);
+		auto create_pipeline_layout_result = 
+			vkCreatePipelineLayout(device, &info, nullptr, &m_vk_pipeline_layout);
+		ensure(create_pipeline_layout_result == VK_SUCCESS);
 	}
 
 	class Builder 
@@ -41,3 +40,18 @@ public:
 	};
 
 };
+
+void VulkanPipelineLayout::move_members(VulkanPipelineLayout&& from)
+{
+	m_vk_device = from.m_vk_device;
+	m_vk_pipeline_layout = from.m_vk_pipeline_layout;
+	from.m_vk_pipeline_layout = VK_NULL_HANDLE;
+}
+
+void VulkanPipelineLayout::free_members()
+{
+	if (m_vk_pipeline_layout != VK_NULL_HANDLE)
+	{
+		vkDestroyPipelineLayout(m_vk_device, m_vk_pipeline_layout, nullptr);
+	}
+}

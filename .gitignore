@@ -4,6 +4,7 @@
 # Spir-V binaries
 *.spv
 
+.build
 .vscode
 
 # User-specific files

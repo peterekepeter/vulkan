@@ -10,7 +10,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugUtilsMessenger::debugCallback(
 
 	auto self = (VulkanDebugUtilsMessenger*)pUserData;
 	self->logger(messageSeverity, messageType, pCallbackData);
-	return VK_FALSE;
+	return VK_FALSE; 
 }
 
 VulkanDebugUtilsMessenger::VulkanDebugUtilsMessenger(

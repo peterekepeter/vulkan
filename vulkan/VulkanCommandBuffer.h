@@ -3,8 +3,10 @@
 #include "VulkanRenderPass.h"
 #include "VulkanFramebuffer.h"
 
+// allocated and freed by VulkanCommandPool
 class VulkanCommandBuffer
 {
+	DECLARE_DEFAULT_MOVEABLE_COPYABLE_TYPE(VulkanCommandBuffer)
 public:
 	VkCommandBuffer m_vk_command_buffer;
 

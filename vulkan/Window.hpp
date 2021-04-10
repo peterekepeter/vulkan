@@ -25,13 +25,10 @@ class Window {
 	HWND m_hwnd;
 	InitWindowInfo m_info;
 
+	DECLARE_MOVEABLE_TYPE(Window)
+
 public:
 	Window(const InitWindowInfo& info);
-	Window(const Window&) = delete;
-	Window& operator = (const Window&) = delete;
-	Window(Window&&);
-	Window& operator = (Window&&);
-	~Window();
 
 	LRESULT wnd_proc(UINT, WPARAM, LPARAM);
 	HWND get_hwnd();

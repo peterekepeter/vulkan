@@ -2,8 +2,10 @@
 #include "VulkanSampler.h"
 #include "VulkanImageView.h"
 
+// allocated and freed by VulkanDescriptorPool
 class VulkanDescriptorSet
 {
+	DECLARE_DEFAULT_MOVEABLE_COPYABLE_TYPE(VulkanDescriptorSet)
 public:
 	VkDevice m_vk_device;
 	VkDescriptorSet m_vk_descriptor_set;
