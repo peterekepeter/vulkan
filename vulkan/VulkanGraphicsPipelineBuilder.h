@@ -199,12 +199,13 @@ inline VulkanGraphicsPipeline VulkanGraphicsPipelineBuilder::Build()
 	info.pColorBlendState = &m_color_blend_state;
 	info.pDynamicState = nullptr; // Optional
 
+	VkPipelineDynamicStateCreateInfo dynamic_state_info = {};
+
 	if (m_dynamic_state.size() > 0) {
-		VkPipelineDynamicStateCreateInfo create_info = {};
-		create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-		create_info.dynamicStateCount = m_dynamic_state.size();
-		create_info.pDynamicStates = m_dynamic_state.data();
-		info.pDynamicState = &create_info;
+		dynamic_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		dynamic_state_info.dynamicStateCount = m_dynamic_state.size();
+		dynamic_state_info.pDynamicStates = m_dynamic_state.data();
+		info.pDynamicState = &dynamic_state_info;
 	}
 
 	info.layout = m_vk_pipeline_layout;

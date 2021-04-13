@@ -25,4 +25,9 @@ jobs:
       run: |
         $env:VULKAN_SDK="C:\VulkanSDK\1.2.141.0"
         $env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE"
-        devenv vulkan.sln /build "Release|x86"
+        devenv vulkan.sln /build "MT|x86"
+    
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Vulkan x86 MT
+        path: .build/out-x86-MT/vulkan.exe
