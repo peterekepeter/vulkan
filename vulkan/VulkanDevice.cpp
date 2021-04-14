@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "./VulkanDevice.h"
 
 VulkanDevice::VulkanDevice(VulkanApplication& vulkan, VulkanPhysicalDevice& physicalDevice)

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "Vulkan.hpp"
 
 void VulkanPhysicalDevice::init(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface) {

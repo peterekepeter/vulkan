@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "VulkanShaderModule.h"
 
 VulkanShaderModule::VulkanShaderModule(VkDevice device, const char* data, size_t size) : device(device) {

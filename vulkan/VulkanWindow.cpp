@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "VulkanWindow.h"
 
 VulkanWindow::VulkanWindow(VkInstance instance, HWND hWnd) : instance(instance) {
@@ -8,7 +8,7 @@ VulkanWindow::VulkanWindow(VkInstance instance, HWND hWnd) : instance(instance) 
 	createInfo.hinstance = GetModuleHandle(nullptr);
 
 	auto create_surface = (PFN_vkCreateWin32SurfaceKHR)vkGetInstanceProcAddr(instance, "vkCreateWin32SurfaceKHR");
-	assert(create_surface != nullptr, "vulkan API exists");
+	ensure(create_surface != nullptr, "vulkan API exists");
 
 	auto status = create_surface(instance, &createInfo, nullptr, &surface);
 	ensure(status == VK_SUCCESS, "created vulkan surface");

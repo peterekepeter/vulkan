@@ -1,6 +1,6 @@
 #pragma once
-#include "VulkanPhysicalMemory.h";
-#include "VulkanMemoryAllocator.h";
+#include "VulkanPhysicalMemory.h"
+#include "VulkanMemoryAllocator.h"
 
 class VulkanMemoryRequirementsAllocator
 {

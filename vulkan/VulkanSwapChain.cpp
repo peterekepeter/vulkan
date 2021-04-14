@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "VulkanSwapChain.h"
 
 static VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {

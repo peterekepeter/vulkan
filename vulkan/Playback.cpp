@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "Playback.hpp"
 #include "Configuration.hpp"
 

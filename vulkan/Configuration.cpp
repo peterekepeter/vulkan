@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "Configuration.hpp"
 #include "../submodule/app-service-sandwich/AppServiceSandwich/CommandLineParser.hpp"
 

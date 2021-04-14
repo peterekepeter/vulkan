@@ -1,4 +1,4 @@
-#include "stdafx.h";
+#include "pch.h"
 #include "./AppVulkanLogger.h";
 
 void AppVulkanLogger::operator()(

@@ -1,210 +1,238 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="Build">
+      <UniqueIdentifier>{36919443-732a-4655-8fc3-26839944d773}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{611c1b51-e8cf-44c6-94ea-8bf4e54c20fd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files">
+    <Filter Include="Win32 Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Header Files\Vulkan">
-      <UniqueIdentifier>{53c4341b-b156-4a4c-b3f7-7374b77de179}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Vulkan">
-      <UniqueIdentifier>{0860d210-8fc9-4cb9-ac2a-342f5aa6d89e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource Files\Builtin Shaders">
+    <Filter Include="Win32 Resource Files\Builtin Shaders">
       <UniqueIdentifier>{15e0d441-5813-4ab3-81e5-27756fb6fc17}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Vendor">
+    <Filter Include="Vendor">
       <UniqueIdentifier>{0970e065-ebe0-4e70-8442-8289e97c1ba0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main">
+      <UniqueIdentifier>{6d3e6838-2fa0-4726-93c4-7c354d5591c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan">
+      <UniqueIdentifier>{0860d210-8fc9-4cb9-ac2a-342f5aa6d89e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan\Implementation">
+      <UniqueIdentifier>{5684dd53-b810-4ef8-81c3-230fb15dc999}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main\Implementation">
+      <UniqueIdentifier>{362f83a5-e2ed-479a-b129-f3f60677df88}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="stdafx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Window.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Configuration.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Playback.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanApplicationBuilder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanDebugUtilsMessenger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AppVulkanLogger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Vulkan.hpp">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanDevice.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanSwapChain.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanGraphicsPipeline.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanGraphicsPipelineBuilder.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanPhysicalMemory.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanMemory.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanMemoryAllocator.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanMemoryRequirementsAllocator.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanImageMemoryAllocator.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanImage.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanImageView.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="CommonImageFormats.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanDescriptorSetLayout.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanPipelineLayout.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanObjectBuilder.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanDescriptorPool.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanCommandPool.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanCommandBuffer.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="BuiltinShaders.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanDescriptorSet.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanFramebuffer.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanShaderModule.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanRenderPass.h">
-      <Filter>Header Files\Vulkan</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
-      <Filter>Resource Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanSampler.h">
-      <Filter>Header Files\Vulkan</Filter>
+      <Filter>Win32 Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="renderdoc_app.h">
-      <Filter>Header Files\Vendor</Filter>
+      <Filter>Vendor</Filter>
     </ClInclude>
-    <ClInclude Include="framework.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Build.h">
+      <Filter>Build</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceUtils.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Window.hpp">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="AppVulkanLogger.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="BuiltinShaders.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="Configuration.hpp">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="Playback.hpp">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanApplicationBuilder.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanDebugUtilsMessenger.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonImageFormats.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Vulkan.hpp">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanCommandBuffer.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanCommandPool.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanDescriptorPool.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanDescriptorSet.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanDescriptorSetLayout.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanDevice.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanFramebuffer.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanGraphicsPipeline.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanGraphicsPipelineBuilder.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanImage.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanImageMemoryAllocator.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanImageView.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanMemory.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanMemoryAllocator.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanMemoryRequirementsAllocator.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanObjectBuilder.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanPhysicalMemory.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanPipelineLayout.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanRenderPass.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanSampler.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanShaderModule.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanSwapChain.h">
+      <Filter>Vulkan</Filter>
     </ClInclude>
     <ClInclude Include="VulkanWindow.h">
-      <Filter>Header Files\Vulkan</Filter>
+      <Filter>Vulkan</Filter>
     </ClInclude>
+    <ClInclude Include="VulkanBuffer.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="SwapChainFramebuffers.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="Stopwatch.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="ApplicationMain.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Build.cpp">
+      <Filter>Build</Filter>
     </ClCompile>
-    <ClCompile Include="Window.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Configuration.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Playback.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="VulkanApplicationBuilder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="VulkanDebugUtilsMessenger.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AppVulkanLogger.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="ResourceUtils.cpp">
+      <Filter>Resources</Filter>
     </ClCompile>
     <ClCompile Include="Vulkan.cpp">
-      <Filter>Source Files\Vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="VulkanShader.cpp">
-      <Filter>Source Files\Vulkan</Filter>
+      <Filter>Vulkan\Implementation</Filter>
     </ClCompile>
     <ClCompile Include="VulkanDevice.cpp">
-      <Filter>Source Files\Vulkan</Filter>
-    </ClCompile>
-    <ClCompile Include="VulkanSwapChain.cpp">
-      <Filter>Source Files\Vulkan</Filter>
+      <Filter>Vulkan\Implementation</Filter>
     </ClCompile>
     <ClCompile Include="VulkanGraphicsPipeline.cpp">
-      <Filter>Source Files\Vulkan</Filter>
+      <Filter>Vulkan\Implementation</Filter>
     </ClCompile>
-    <ClCompile Include="BuiltinShaders.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="VulkanShader.cpp">
+      <Filter>Vulkan\Implementation</Filter>
     </ClCompile>
-    <ClCompile Include="framework.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="VulkanSwapChain.cpp">
+      <Filter>Vulkan\Implementation</Filter>
     </ClCompile>
     <ClCompile Include="VulkanWindow.cpp">
-      <Filter>Source Files\Vulkan</Filter>
+      <Filter>Vulkan\Implementation</Filter>
     </ClCompile>
+    <ClCompile Include="VulkanBuffer.cpp">
+      <Filter>Vulkan\Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="SwapChainFramebuffers.cpp">
+      <Filter>Vulkan\Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Playback.cpp">
+      <Filter>Main\Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="ApplicationMain.cpp">
+      <Filter>Main\Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="Configuration.cpp">
+      <Filter>Main\Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="BuiltinShaders.cpp">
+      <Filter>Main\Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="AppVulkanLogger.cpp">
+      <Filter>Main\Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="Stopwatch.cpp">
+      <Filter>Main\Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanApplicationBuilder.cpp">
+      <Filter>Main\Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="Window.cpp">
+      <Filter>Main\Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanDebugUtilsMessenger.cpp">
+      <Filter>Main\Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="windows.manifest">
-      <Filter>Resource Files</Filter>
+      <Filter>Win32 Resource Files</Filter>
     </Manifest>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="fullscreen-triangle.vert">
-      <Filter>Resource Files\Builtin Shaders</Filter>
+      <Filter>Win32 Resource Files\Builtin Shaders</Filter>
     </CustomBuild>
     <CustomBuild Include="sdr-output.frag">
-      <Filter>Resource Files\Builtin Shaders</Filter>
+      <Filter>Win32 Resource Files\Builtin Shaders</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc">
-      <Filter>Resource Files</Filter>
+      <Filter>Win32 Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>

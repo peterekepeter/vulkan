@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "pch.h"
 #include "BuiltinShaders.h"
 #include <Windows.h>
 #include "resource.h"
