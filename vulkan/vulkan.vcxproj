@@ -357,6 +357,14 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).spv</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(VULKAN_SDK)\bin\glslangValidator.exe" -V "%(FullPath)" -o "%(Filename).spv"</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MT|Win32'">"$(VULKAN_SDK)\bin\glslangValidator.exe" -V "%(FullPath)" -o "%(Filename).spv"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MT|x64'">"$(VULKAN_SDK)\bin\glslangValidator.exe" -V "%(FullPath)" -o "%(Filename).spv"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MT|Win32'">%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MTd|Win32'">"$(VULKAN_SDK)\bin\glslangValidator.exe" -V "%(FullPath)" -o "%(Filename).spv"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MTd|Win32'">%(Filename).spv</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MT|x64'">%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MTd|x64'">"$(VULKAN_SDK)\bin\glslangValidator.exe" -V "%(FullPath)" -o "%(Filename).spv"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MTd|x64'">%(Filename).spv</Outputs>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
@@ -381,6 +389,14 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename).spv</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).spv</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).spv</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MT|Win32'">"$(VULKAN_SDK)\bin\glslangValidator.exe" -V "%(FullPath)" -o "%(Filename).spv"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MTd|Win32'">"$(VULKAN_SDK)\bin\glslangValidator.exe" -V "%(FullPath)" -o "%(Filename).spv"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MT|x64'">"$(VULKAN_SDK)\bin\glslangValidator.exe" -V "%(FullPath)" -o "%(Filename).spv"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MTd|x64'">"$(VULKAN_SDK)\bin\glslangValidator.exe" -V "%(FullPath)" -o "%(Filename).spv"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MT|Win32'">%(Filename).spv</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MTd|Win32'">%(Filename).spv</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MT|x64'">%(Filename).spv</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MTd|x64'">%(Filename).spv</Outputs>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

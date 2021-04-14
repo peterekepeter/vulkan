@@ -1,0 +1,5 @@
+// Hint files help the Visual Studio IDE interpret Visual C++ identifiers
+// such as names of functions and macros.
+// For more information see https://go.microsoft.com/fwlink/?linkid=865984
+#define DECLARE_MOVEABLE(T) T(const T&) = delete; T& operator(const T&) = delete; T(T&& t){ steal_members(t); }; T& operator(T&& t){ free_members(); take_members(t); return *this; }; ~T() { free_members(); };
+#define DECLARE_MOVEABLE_TYPE(T) private: void move_members(T&&); void free_members(); public: T(const T&) = delete; T& operator =(const T&) = delete; T(T&& t){ move_members(std::move(t)); }; T& operator =(T&& t){ free_members(); move_members(std::move(t)); return *this; }; ~T() { free_members(); };
