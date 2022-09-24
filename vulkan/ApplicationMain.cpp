@@ -503,6 +503,7 @@ RunResult run_application(ApplicationServices& app) {
 		auto vertShader = builder.shader_module(read_shader("shader.vert"));
 		auto fragShader = builder.shader_module(read_shader("shader.frag"));
 
+		bool curves_enabled = false;
 		document_model curves;
 		std::vector<float> curves_eval_result;
 
@@ -511,6 +512,7 @@ RunResult run_application(ApplicationServices& app) {
 			std::ifstream file(config.curvesFile, std::ios::binary);
 			io_binary::read(file, curves);
 			curves_eval_result.resize(curves.curve_list.size());
+			curves_enabled = curves.curve_list.size() > 0;
 		}
 
 		app.console.Open().Output << "Creating swap chain.\n";
@@ -563,9 +565,13 @@ RunResult run_application(ApplicationServices& app) {
 		uniformBuffers.reserve(swap.swapChainImages.size());
 		uniformParamBuffers.reserve(swap.swapChainImages.size());
 
-		for (size_t i = 0; i < swap.swapChainImages.size(); i++) {
+		for (size_t i = 0; i < swap.swapChainImages.size(); i++) 
+		{
 			uniformBuffers.emplace_back(device.device, physical.physicalDevice, sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			uniformParamBuffers.emplace_back(device.device, physical.physicalDevice, curves.curve_list.size() * sizeof(float), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			if (curves_enabled) 
+			{
+				uniformParamBuffers.emplace_back(device.device, physical.physicalDevice, curves.curve_list.size() * sizeof(float), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			}
 		}
 
 		// command buffers
@@ -576,7 +582,10 @@ RunResult run_application(ApplicationServices& app) {
 		for (size_t i = 0; i < swap.swapChainImages.size(); i++) {
 			descriptor_sets.push_back(descriptor_pool.allocate_descriptor_set(ubo_descriptor_set_layout));
 			descriptor_sets[i].write_uniform_buffer(0, uniformBuffers[i].buffer);
-			descriptor_sets[i].write_uniform_buffer(1, uniformParamBuffers[i].buffer);
+			if (curves_enabled)
+			{
+				descriptor_sets[i].write_uniform_buffer(1, uniformParamBuffers[i].buffer);
+			}
 		}
 
 		// recording 
@@ -592,8 +601,9 @@ RunResult run_application(ApplicationServices& app) {
 				.begin_render_pass(render_pass.m_vk_render_pass, framebuffers.swapChainFramebuffers[i], render_area, 1, &clear_color)
 				.bind_graphics_pipeline(pipeline)
 				.bind_graphics_descriptor_set(pipeline_layout, descriptor_sets[i])
+				.clear_attachment(0, VK_IMAGE_ASPECT_COLOR_BIT, clear_color, width, height)
 				.set_viewport(viewport)
-				.draw(3)
+				.draw(6000000)
 				.end_render_pass()
 				.end_recording();
 		}
@@ -691,13 +701,16 @@ RunResult run_application(ApplicationServices& app) {
 			memcpy(data, &ubo, sizeof(ubo));
 			vkUnmapMemory(device.device, uniformBuffers[imageIndex].bufferMemory);
 
-			// eval curves and write to GPU buffer
-			for (int i = 0; i < curves.curve_list.size(); i++) {
-				curves_eval_result[i] = curves.curve_list[i].eval(ubo.time);
+			if (curves_enabled)
+			{
+				// eval curves and write to GPU buffer
+				for (int i = 0; i < curves.curve_list.size(); i++) {
+					curves_eval_result[i] = curves.curve_list[i].eval(ubo.time);
+				}
+				vkMapMemory(device.device, uniformParamBuffers[imageIndex].bufferMemory, 0, curves_eval_result.size() * sizeof(float), 0, &data);
+				memcpy(data, curves_eval_result.data(), curves_eval_result.size() * sizeof(float));
+				vkUnmapMemory(device.device, uniformParamBuffers[imageIndex].bufferMemory);
 			}
-			vkMapMemory(device.device, uniformParamBuffers[imageIndex].bufferMemory, 0, curves_eval_result.size() * sizeof(float), 0, &data);
-			memcpy(data, curves_eval_result.data(), curves_eval_result.size() * sizeof(float));
-			vkUnmapMemory(device.device, uniformParamBuffers[imageIndex].bufferMemory);
 
 			VkSubmitInfo submitInfo = {};
 			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
