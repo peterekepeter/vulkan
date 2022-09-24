@@ -105,6 +105,25 @@ static void skipBomHeader(std::ifstream& file) {
 	file.seekg(offset, std::ios_base::cur);
 }
 
+static int parseInt(const std::string& str)
+{
+	int result = 0;
+	bool negative = false;
+	for (const char c : str) {
+		if (c == '-') {
+			negative = true;
+		}
+		else if (c >= '0' && c <= '9') {
+			result = result * 10 + c - '0';
+		}
+	}
+	if (negative)
+	{
+		result = -result;
+	}
+	return result;
+}
+
 void ConfigurationBuilder::ReadConfigurationFile()
 {
 	Configuration& config = *this->configuration;
@@ -144,6 +163,9 @@ void ConfigurationBuilder::ReadConfigurationFile()
 		}
 		else if (key == "curves") {
 			config.curvesFile = value;
+		}
+		else if (key == "vertices") {
+			config.vertices = parseInt(value);
 		}
 	}
 }

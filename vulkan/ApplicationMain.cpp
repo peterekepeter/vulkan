@@ -361,7 +361,7 @@ RunResult run_application(ApplicationServices& app) {
 			.begin_render_pass(render_pass_accumulate.m_vk_render_pass, accumulator_framebuffer.m_vk_framebuffer, render_area, 0, nullptr)
 			.bind_graphics_pipeline(main_pipeline)
 			.bind_graphics_descriptor_set(main_pipeline_layout, main_ubo_descriptor_set)
-			.draw(3)
+			.draw(config.vertices)
 			.end_render_pass()
 			.end_recording();
 
@@ -603,7 +603,7 @@ RunResult run_application(ApplicationServices& app) {
 				.bind_graphics_descriptor_set(pipeline_layout, descriptor_sets[i])
 				.clear_attachment(0, VK_IMAGE_ASPECT_COLOR_BIT, clear_color, width, height)
 				.set_viewport(viewport)
-				.draw(6000000)
+				.draw(config.vertices)
 				.end_render_pass()
 				.end_recording();
 		}

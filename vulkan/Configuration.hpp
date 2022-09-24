@@ -15,6 +15,7 @@ struct Configuration
 	int sample_count = 1;
 	int frame_count = -1;
 	int device_index = -1;
+	int vertices = 3;
 	std::wstring windowTitle;
 	std::string musicFile;
 	std::string outFile;
