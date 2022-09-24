@@ -21,7 +21,8 @@ public:
 		uint32_t binding, 
 		VkBuffer buffer, 
 		VkDeviceSize offset = 0, 
-		VkDeviceSize range = VK_WHOLE_SIZE) {
+		VkDeviceSize range = VK_WHOLE_SIZE) 
+	{
 		VkDescriptorBufferInfo buffer_info = {};
 		buffer_info.buffer = buffer;
 		buffer_info.offset = offset;
