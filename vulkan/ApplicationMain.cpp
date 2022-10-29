@@ -148,6 +148,7 @@ RunResult run_application(ApplicationServices& app) {
 	windowInitInfo.x_res = xres;
 	windowInitInfo.y_res = yres;
 	windowInitInfo.title = config.windowTitle;
+	windowInitInfo.keep_on_top = config.alwaysOnTop;
 
 	windowInitInfo.on_close = [&]() {
 		running = false;

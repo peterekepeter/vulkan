@@ -9,6 +9,7 @@ struct Configuration
 	bool liveReload = true;
 	bool fullscreen = false;
 	bool borderless = false;
+	bool alwaysOnTop = false;
 	int xres = 0;
 	int yres = 0;
 	int fps = 60;

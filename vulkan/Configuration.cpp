@@ -49,6 +49,7 @@ void ConfigurationBuilder::ReadConsoleConfig()
 	CommandLineParser()
 		.Option("-b", "--borderless", borderless)
 		.Option("-w", "--windowed", windowed)
+		.Option("-t", "--alwaysontop", config.alwaysOnTop)
 		.Option("-x", "--xres", config.xres)
 		.Option("-y", "--yres", config.yres)
 		.Option("-o", "--offline", config.offline)
@@ -166,6 +167,9 @@ void ConfigurationBuilder::ReadConfigurationFile()
 		}
 		else if (key == "vertices") {
 			config.vertices = parseInt(value);
+		}
+		else if (key == "alwaysOnTop") {
+			config.alwaysOnTop = value == "1";
 		}
 	}
 }

@@ -14,6 +14,7 @@ static void adjust_window_size(HWND hwnd, int& clientWidth, int& clientHeight, i
 static LRESULT CALLBACK class_wnd_proc_wrapper(HWND hwnd, UINT message, WPARAM w_param, LPARAM l_param);
 static void register_window_class();
 static void win32_ensure(bool condition);
+static void set_top_most(HWND hwnd);
 
 
 LRESULT Window::wnd_proc(UINT message, WPARAM wParam, LPARAM lParam)
@@ -49,7 +50,7 @@ LRESULT Window::wnd_proc(UINT message, WPARAM wParam, LPARAM lParam)
 
 		RECT* const prcNewWindow = (RECT*)lParam;
 		SetWindowPos(m_hwnd,
-			NULL,
+			HWND_TOP,
 			prcNewWindow->left,
 			prcNewWindow->top,
 			prcNewWindow->right - prcNewWindow->left,
@@ -67,6 +68,13 @@ LRESULT Window::wnd_proc(UINT message, WPARAM wParam, LPARAM lParam)
 		// on esc exit!
 		if (wParam == VK_ESCAPE) {
 			DestroyWindow(m_hwnd);
+		}
+		break;
+	}
+	case WM_PAINT: {
+		if (m_info.keep_on_top) 
+		{
+			set_top_most(m_hwnd);
 		}
 		break;
 	}
@@ -166,6 +174,24 @@ static void win32_ensure(bool condition) {
 		LocalFree(win32_message);
 		SetLastError(0);
 		throw error;
+	}
+}
+
+void set_top_most(HWND hwnd)
+{
+	if (IsWindowVisible(hwnd) == TRUE)
+	{
+		RECT rect;
+		GetWindowRect(hwnd, &rect); 
+		SetWindowPos(
+			hwnd, 
+			HWND_TOPMOST, 
+			rect.left, 
+			rect.top, 
+			rect.right - rect.left, 
+			rect.bottom - rect.top, 
+			SWP_SHOWWINDOW
+		);
 	}
 }
 

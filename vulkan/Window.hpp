@@ -12,6 +12,7 @@ public:
 	bool fullscreen = false;
 	bool borderless = false;
 	bool disable_steam_overlay = true;
+	bool keep_on_top = false;
 	int x_res = 0;
 	int y_res = 0;
 	std::wstring title;
