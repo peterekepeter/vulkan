@@ -398,6 +398,11 @@ RunResult run_application(ApplicationServices& app) {
 
 		int sample_count = config.sample_count;
 		int fps = config.fps;
+		if (fps <= 0) 
+		{
+			fps = 60;
+			auto con = app.console.Open().Output << "defaulting fps to 60";
+		}
 		int frame_count = config.frame_count;
 		float shutter_open = 0.5;
 
@@ -746,6 +751,17 @@ RunResult run_application(ApplicationServices& app) {
 			presentInfo.pResults = nullptr; // Optional
 
 			vkQueuePresentKHR(device.presentQueue, &presentInfo);
+
+			// framerate limiter
+			if (config.fps > 0) 
+			{
+				double currentRenderTime = playback.GetPosition() - currentPlaybackPosition;
+				double secondsToNextFrame = (1.0 / config.fps) - currentRenderTime;
+				if (secondsToNextFrame > 0)
+				{
+					Sleep(static_cast<int>(secondsToNextFrame * 1000));
+				}
+			}
 		}
 
 		// wait before freeing resources

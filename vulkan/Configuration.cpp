@@ -171,5 +171,8 @@ void ConfigurationBuilder::ReadConfigurationFile()
 		else if (key == "alwaysOnTop") {
 			config.alwaysOnTop = value == "1";
 		}
+		else if (key == "fps") {
+			config.fps = parseInt(value);
+		}
 	}
 }
